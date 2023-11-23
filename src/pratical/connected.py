@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
+import os
 
 def find_edges_for_connected_component(vertices):
     edges_required = []
@@ -32,6 +33,11 @@ def find_edges_for_connected_component(vertices):
 num_vertices = range(5, 101, 5)  # Change the range as needed
 edges_needed, median_edges = find_edges_for_connected_component(num_vertices)
 
+# Create a directory if it doesn't exist
+directory = 'plots'
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
 # Set up better aesthetics for the plots
 plt.figure(figsize=(14, 6))
 
@@ -56,5 +62,9 @@ plt.grid(True)
 plt.xticks(fontsize=8)
 plt.yticks(fontsize=8)
 plt.tight_layout()
+
+# Save median line graph to directory
+lineplot_filename = os.path.join(directory, 'median_edges_lineplot.png')
+plt.savefig(lineplot_filename)
 
 plt.show()
