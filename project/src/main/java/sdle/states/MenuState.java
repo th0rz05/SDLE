@@ -16,8 +16,11 @@ public class MenuState implements State {
             switch (input) {
                 case "c" -> {
                     Utils.clearConsole();
-                    System.out.println("Switching to create a shopping list state...");
                     return new CreateListState();
+                }
+                case "l" -> {
+                    Utils.clearConsole();
+                    return new ListShoppingListsState();
                 }
                 case "q" -> {
                     Utils.clearConsole();
@@ -35,6 +38,7 @@ public class MenuState implements State {
     private void display() {
         System.out.println("------ Menu ------");
         System.out.println("Enter 'C' to create a shopping list");
+        System.out.println("Enter 'L' to list all shopping lists");
         System.out.println("Enter 'Q' to quit");
         System.out.print("Your choice: ");
     }
