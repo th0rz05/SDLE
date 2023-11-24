@@ -1,3 +1,5 @@
+package sdle.utils;
+
 public class Utils {
 
     public static void clearConsole() {
@@ -7,3 +9,4 @@ public class Utils {
         }
     }
 }
+

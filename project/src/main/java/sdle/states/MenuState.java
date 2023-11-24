@@ -1,3 +1,7 @@
+package sdle.states;
+
+import sdle.utils.Utils;
+
 import java.util.Scanner;
 
 public class MenuState implements State {
@@ -35,3 +39,4 @@ public class MenuState implements State {
         System.out.print("Your choice: ");
     }
 }
+
