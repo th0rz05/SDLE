@@ -13,7 +13,6 @@ public class ListShoppingListsState implements State {
 
     @Override
     public State run() {
-        System.out.println("Listing all shopping lists...");
 
         // Display all shopping lists from the database
         displayShoppingLists();
