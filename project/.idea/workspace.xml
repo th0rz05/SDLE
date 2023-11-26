@@ -4,15 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/shopping.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/shopping.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/ListShoppingListsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/states/ListShoppingListsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/states/MenuState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/states/State.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/utils/Utils.java" afterDir="false" />
-    </list>
+    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

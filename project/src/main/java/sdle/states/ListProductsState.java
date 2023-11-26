@@ -25,6 +25,15 @@ public class ListProductsState implements State {
             System.out.print("Enter the shopping list name: ");
             String listName = scanner.nextLine().trim();
 
+            // See if the shopping list exists
+            if (!shoppingListExists(listName)) {
+                System.out.println("Shopping list does not exist.");
+                System.out.println("Press enter to continue...");
+                scanner.nextLine();
+                Utils.clearConsole();
+                return new MenuState();
+            }
+
             listId = getListId(listName);
         }
 
@@ -119,5 +128,25 @@ public class ListProductsState implements State {
         System.out.println("4 - Delete shopping list");
         System.out.println("Enter 'Q' to return to the main menu");
         System.out.print("Your choice: ");
+    }
+
+    private boolean shoppingListExists(String shoppingListName) {
+        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "SELECT * FROM shopping_lists WHERE list_name = ?";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, shoppingListName);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        return rs.next();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking if Shopping List exists: " + e.getMessage());
+        }
+        return false;
     }
 }
