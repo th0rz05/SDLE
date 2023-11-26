@@ -1,66 +1,66 @@
 plugins {
     id 'java'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.0' // Shadow plugin for uber JARs
 }
 
 group = 'sdle'
-version = '1'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    // Dependencies for both client and server
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'org.xerial:sqlite-jdbc:3.34.0'
     implementation 'org.zeromq:jeromq:0.5.4'
+    implementation 'org.xerial:sqlite-jdbc:3.36.0'
 }
+
+def clientMainClassName = 'sdle.client.Main'
+def serverMainClassName = 'sdle.server.Main'
 
 application {
-    // Set the main class for the application
-    mainClassName = 'sdle.client.Main'
+    // Set the main class for the application (not necessary for shadowJar task)
+    mainClassName = clientMainClassName
 }
 
-
-// Client JAR task
-task clientJar(type: Jar) {
-    dependsOn configurations.runtimeClasspath
-    from sourceSets.main.output
+// Configuration for client JAR
+task clientJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveBaseName = 'client'
     manifest {
-        attributes 'Main-Class': 'sdle.client.Main'
+        attributes(
+                'Main-Class': clientMainClassName
+        )
     }
-    archiveFileName = 'client.jar'
-    into('lib') {
-        from configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-        duplicatesStrategy = 'EXCLUDE'
-    }
-}
-
-clientJar {
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-}
-
-// Server JAR task
-task serverJar(type: Jar) {
-    dependsOn configurations.runtimeClasspath
     from sourceSets.main.output
-    manifest {
-        attributes 'Main-Class': 'sdle.server.Main'
-    }
-    archiveFileName = 'server.jar'
-    into('lib') {
-        from configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-        eachFile { duplicatesStrategy = 'INCLUDE' }
+    configurations = [project.configurations.runtimeClasspath]
+}
 
+// Configuration for server JAR
+task serverJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveBaseName = 'server'
+    manifest {
+        attributes(
+                'Main-Class': serverMainClassName
+        )
     }
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    from sourceSets.main.output
+    configurations = [project.configurations.runtimeClasspath]
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// Define dependencies specific to each JAR
+configurations {
+    clientImplementation.extendsFrom implementation
+    serverImplementation.extendsFrom implementation
+}
+
+dependencies {
+    // Dependencies specific to the client
+    clientImplementation 'org.xerial:sqlite-jdbc:3.36.0'
 }

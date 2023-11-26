@@ -4,23 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add users for the local side and started a server that listens to usernames">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/create_database.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/shopping.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/DeleteListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/ListShoppingListsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListShoppingListsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/State.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/guilherme_shopping.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/client/guilherme_shopping.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/client/tiago_shopping.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +76,7 @@
       <recent name="sdle.states" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.project [serverJar]">
+  <component name="RunManager" selected="Gradle.project [clean serverJar]">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="sdle.client.Main" />
       <module name="project.main" />
@@ -192,10 +182,10 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.project [clientJar]" />
         <item itemvalue="Gradle.project [serverJar]" />
         <item itemvalue="Gradle.project [clean clientJar]" />
         <item itemvalue="Application.Main" />
-        <item itemvalue="Gradle.project [clientJar]" />
         <item itemvalue="Gradle.project [clean serverJar]" />
       </list>
     </recent_temporary>
@@ -216,11 +206,19 @@
       <option name="project" value="LOCAL" />
       <updated>1700962299053</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="add users for the local side and started a server that listens to usernames">
+      <created>1700968539149</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1700968539149</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add error control" />
-    <option name="LAST_COMMIT_MESSAGE" value="add error control" />
+    <MESSAGE value="add users for the local side and started a server that listens to usernames" />
+    <option name="LAST_COMMIT_MESSAGE" value="add users for the local side and started a server that listens to usernames" />
   </component>
 </project>

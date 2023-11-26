@@ -7,7 +7,7 @@ import sdle.client.states.State;
 public class Main {
     public static void main(String[] args) {
 
-        State state = new MenuState("test");
+        State state = new LoginState();
 
         while(state != null) {
             state = state.run();

@@ -5,8 +5,7 @@
 Open the terminal in the project folder and run:
 
 ```bash
-./gradlew clean clientJar
-./gradlew clean serverJar
+./gradlew clean clientJar serverJar
 ```
 
 Then to run the server:
