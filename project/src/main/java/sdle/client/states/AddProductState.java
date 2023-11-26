@@ -1,6 +1,6 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,9 +10,12 @@ import java.util.Scanner;
 
 public class AddProductState implements State {
     private final int listId;
+
+    private final String user;
     private final Scanner scanner = new Scanner(System.in);
 
-    public AddProductState(int listId) {
+    public AddProductState(String user, int listId) {
+        this.user = user;
         this.listId = listId;
     }
 
@@ -28,7 +31,7 @@ public class AddProductState implements State {
             System.out.println("Press enter to continue...");
             scanner.nextLine();
             Utils.clearConsole();
-            return new ListProductsState(listId);
+            return new ListProductsState(user,listId);
         }
 
         System.out.print("Enter the quantity: ");
@@ -40,7 +43,7 @@ public class AddProductState implements State {
             System.out.println("Press enter to continue...");
             scanner.nextLine();
             Utils.clearConsole();
-            return new ListProductsState(listId);
+            return new ListProductsState(user,listId);
         }
 
         // Save the product to the list
@@ -53,11 +56,11 @@ public class AddProductState implements State {
         Utils.clearConsole();
 
         // Transition back to the menu state
-        return new ListProductsState(listId);
+        return new ListProductsState(user,listId);
     }
 
     private boolean productExistsInList(int listId, String productName) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
@@ -76,7 +79,7 @@ public class AddProductState implements State {
     }
 
     private boolean addProductToList(int listId, String productName, int quantity) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {

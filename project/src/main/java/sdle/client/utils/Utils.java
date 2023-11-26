@@ -1,4 +1,4 @@
-package sdle.utils;
+package sdle.client.utils;
 
 public class Utils {
 

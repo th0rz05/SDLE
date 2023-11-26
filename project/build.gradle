@@ -4,18 +4,61 @@ plugins {
 }
 
 group = 'sdle'
-version = '1.0-SNAPSHOT'
+version = '1'
 
 repositories {
     mavenCentral()
 }
 
-mainClassName = 'sdle.Main'
-
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation 'org.xerial:sqlite-jdbc:3.34.0'
+    implementation 'org.zeromq:jeromq:0.5.4'
+}
+
+application {
+    // Set the main class for the application
+    mainClassName = 'sdle.client.Main'
+}
+
+
+// Client JAR task
+task clientJar(type: Jar) {
+    dependsOn configurations.runtimeClasspath
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'sdle.client.Main'
+    }
+    archiveFileName = 'client.jar'
+    into('lib') {
+        from configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+        duplicatesStrategy = 'EXCLUDE'
+    }
+}
+
+clientJar {
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
+
+// Server JAR task
+task serverJar(type: Jar) {
+    dependsOn configurations.runtimeClasspath
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'sdle.server.Main'
+    }
+    archiveFileName = 'server.jar'
+    into('lib') {
+        from configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+        eachFile { duplicatesStrategy = 'INCLUDE' }
+
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
 }
 
 tasks.test {

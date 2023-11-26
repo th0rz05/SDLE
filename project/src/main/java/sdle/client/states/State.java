@@ -1,6 +1,4 @@
-package sdle.states;
-
-import java.util.List;
+package sdle.client.states;
 
 public interface State {
     public State run();

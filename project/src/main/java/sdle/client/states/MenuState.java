@@ -1,11 +1,18 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.util.Scanner;
 
 public class MenuState implements State {
     private final Scanner scanner = new Scanner(System.in);
+    private final String user;
+
+    public MenuState(String user) {
+        this.user = user;
+        System.out.println("Welcome, " + user + "!\n\n\n");
+
+    }
 
     @Override
     public State run() {
@@ -16,15 +23,15 @@ public class MenuState implements State {
             switch (input) {
                 case "1" -> {
                     Utils.clearConsole();
-                    return new ListProductsState(0);
+                    return new ListProductsState(user,0);
                 }
                 case "2" -> {
                     Utils.clearConsole();
-                    return new CreateListState();
+                    return new CreateListState(user);
                 }
                 case "3" -> {
                     Utils.clearConsole();
-                    return new ListShoppingListsState();
+                    return new ListShoppingListsState(user);
                 }
                 case "q" -> {
                     Utils.clearConsole();

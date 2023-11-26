@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="" />
+    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/create_database.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/DeleteListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/ListShoppingListsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListShoppingListsState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/State.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,17 +45,6 @@
                 <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
                 <item name="project" type="f1a62948:ProjectNode" />
               </path>
-              <path>
-                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="project" type="f1a62948:ProjectNode" />
-                <item name="Tasks" type="e4a08cd1:TasksNode" />
-              </path>
-              <path>
-                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="project" type="f1a62948:ProjectNode" />
-                <item name="Tasks" type="e4a08cd1:TasksNode" />
-                <item name="application" type="c8890929:TasksNode$1" />
-              </path>
             </expand>
             <select />
           </tree_state>
@@ -56,30 +62,37 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectId" id="2YcOHdPcZsHB1Kju8Naa3S03KXO" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="sdle.states" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Main">
+  <component name="RunManager" selected="Gradle.project [serverJar]">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="sdle.Main" />
+      <option name="MAIN_CLASS_NAME" value="sdle.client.Main" />
       <module name="project.main" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="sdle.*" />
+          <option name="PATTERN" value="sdle.client.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -87,7 +100,53 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="project [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="project [clean clientJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="clean" />
+            <option value="clientJar" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <ForceTestExec>false</ForceTestExec>
+      <method v="2" />
+    </configuration>
+    <configuration name="project [clean serverJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="clean" />
+            <option value="serverJar" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <ForceTestExec>false</ForceTestExec>
+      <method v="2" />
+    </configuration>
+    <configuration name="project [clientJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -98,7 +157,29 @@
         </option>
         <option name="taskNames">
           <list>
-            <option value="run" />
+            <option value="clientJar" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <ForceTestExec>false</ForceTestExec>
+      <method v="2" />
+    </configuration>
+    <configuration name="project [serverJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="serverJar" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -111,8 +192,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.project [run]" />
+        <item itemvalue="Gradle.project [serverJar]" />
+        <item itemvalue="Gradle.project [clean clientJar]" />
         <item itemvalue="Application.Main" />
+        <item itemvalue="Gradle.project [clientJar]" />
+        <item itemvalue="Gradle.project [clean serverJar]" />
       </list>
     </recent_temporary>
   </component>
@@ -125,6 +209,18 @@
       <option name="presentableId" value="Default" />
       <updated>1700821318308</updated>
     </task>
+    <task id="LOCAL-00001" summary="add error control">
+      <created>1700962299053</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1700962299053</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add error control" />
+    <option name="LAST_COMMIT_MESSAGE" value="add error control" />
   </component>
 </project>

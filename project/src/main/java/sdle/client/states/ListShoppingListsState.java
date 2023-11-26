@@ -1,6 +1,6 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,6 +10,12 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class ListShoppingListsState implements State {
+
+    private final String user;
+
+    public ListShoppingListsState(String user) {
+        this.user = user;
+    }
 
     @Override
     public State run() {
@@ -24,11 +30,11 @@ public class ListShoppingListsState implements State {
         Utils.clearConsole();
 
         // Transition back to the menu state
-        return new MenuState();
+        return new MenuState(user);
     }
 
     private void displayShoppingLists() {
-        String url = "jdbc:sqlite:database/shopping.db";
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {

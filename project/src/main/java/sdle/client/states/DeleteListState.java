@@ -1,6 +1,6 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,9 +11,12 @@ import java.util.Scanner;
 
 public class DeleteListState implements State {
     private final int listId;
+
+    private final String user;
     private final Scanner scanner = new Scanner(System.in);
 
-    public DeleteListState(int listId) {
+    public DeleteListState(String user, int listId) {
+        this.user = user;
         this.listId = listId;
     }
 
@@ -45,11 +48,11 @@ public class DeleteListState implements State {
         Utils.clearConsole();
 
         // Transition back to the menu state
-        return new MenuState();
+        return new MenuState(user);
     }
 
     private String getListName(int listId) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
         String listName = null;
 
         try (Connection connection = DriverManager.getConnection(url)) {
@@ -73,7 +76,7 @@ public class DeleteListState implements State {
     }
 
     private boolean deleteList(int listId) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {

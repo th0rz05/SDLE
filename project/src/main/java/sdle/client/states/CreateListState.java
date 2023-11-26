@@ -1,6 +1,6 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.sql.*;
 import java.util.Scanner;
@@ -8,6 +8,12 @@ import java.util.UUID;
 
 public class CreateListState implements State {
     private final Scanner scanner = new Scanner(System.in);
+
+    private final String user;
+
+    public CreateListState(String user) {
+        this.user = user;
+    }
 
     @Override
     public State run() {
@@ -24,7 +30,7 @@ public class CreateListState implements State {
             System.out.println("Press enter to continue...");
             scanner.nextLine();
             Utils.clearConsole();
-            return new MenuState();
+            return new MenuState(user);
         }
 
         // Perform actions for creating a shopping list here
@@ -44,11 +50,11 @@ public class CreateListState implements State {
         Utils.clearConsole();
 
         // Transition back to the menu state
-        return new MenuState();
+        return new MenuState(user);
     }
 
     private boolean shoppingListExists(String shoppingListName) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
@@ -72,7 +78,7 @@ public class CreateListState implements State {
     }
 
     private boolean saveShoppingListToDatabase(String shoppingListID, String shoppingListName) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {

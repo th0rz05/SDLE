@@ -1,6 +1,6 @@
-package sdle.states;
+package sdle.client.states;
 
-import sdle.utils.Utils;
+import sdle.client.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,9 +11,12 @@ import java.util.Scanner;
 
 public class ListProductsState implements State {
     private final Scanner scanner = new Scanner(System.in);
+
+    private final String user;
     private int listId;
 
-    public ListProductsState(int listId) {
+    public ListProductsState(String user, int listId) {
+        this.user = user;
         this.listId = listId;
     }
 
@@ -31,7 +34,7 @@ public class ListProductsState implements State {
                 System.out.println("Press enter to continue...");
                 scanner.nextLine();
                 Utils.clearConsole();
-                return new MenuState();
+                return new MenuState(user);
             }
 
             listId = getListId(listName);
@@ -47,24 +50,24 @@ public class ListProductsState implements State {
             switch (input) {
                 case "1" -> {
                     Utils.clearConsole();
-                    return new AddProductState(listId);
+                    return new AddProductState(user,listId);
                 }
                 case "2" -> {
                     Utils.clearConsole();
-                    return new RemoveProductState(listId);
+                    return new RemoveProductState(user,listId);
                 }
                 case "3" -> {
                     Utils.clearConsole();
-                    return new UpdateProductState(listId);
+                    return new UpdateProductState(user,listId);
                 }
                 case "4" -> {
                     Utils.clearConsole();
-                    return new DeleteListState(listId);
+                    return new DeleteListState(user,listId);
                 }
                 case "q" -> {
                     Utils.clearConsole();
                     // Transition back to the menu state
-                    return new MenuState();
+                    return new MenuState(user);
                 }
                 default -> {
                     Utils.clearConsole();
@@ -75,7 +78,7 @@ public class ListProductsState implements State {
     }
 
     private int getListId(String listName) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
@@ -96,7 +99,7 @@ public class ListProductsState implements State {
     }
 
     private void displayListProducts(int listId) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
@@ -131,7 +134,7 @@ public class ListProductsState implements State {
     }
 
     private boolean shoppingListExists(String shoppingListName) {
-        String url = "jdbc:sqlite:database/shopping.db"; // Replace with your database URL
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
