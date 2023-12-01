@@ -6,8 +6,11 @@ import java.sql.*;
 import java.util.Scanner;
 import java.util.UUID;
 
+
+
 public class CreateListState implements State {
     private final Scanner scanner = new Scanner(System.in);
+
 
     private final String user;
 
@@ -34,11 +37,12 @@ public class CreateListState implements State {
         }
 
         // Perform actions for creating a shopping list here
-        String shoppingListID = generateUniqueID();
+        String shoppingListUUID = generateUniqueID();
 
         // Save the shopping list to the database
-        if (saveShoppingListToDatabase(shoppingListID, shoppingListName)) {
-            System.out.println("Shopping List created with ID: " + shoppingListID);
+        if (saveShoppingListToDatabase(shoppingListUUID, shoppingListName)) {
+            Utils.sendShoppingListToServer(shoppingListUUID, shoppingListName);
+            System.out.println("Shopping List created with ID: " + shoppingListUUID);
         } else {
             System.out.println("Failed to save Shopping List to the database.");
         }
@@ -77,7 +81,7 @@ public class CreateListState implements State {
         return UUID.randomUUID().toString();
     }
 
-    private boolean saveShoppingListToDatabase(String shoppingListID, String shoppingListName) {
+    private boolean saveShoppingListToDatabase(String shoppingListUUID, String shoppingListName) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
@@ -85,7 +89,7 @@ public class CreateListState implements State {
                 String sql = "INSERT INTO shopping_lists (list_uuid, list_name) VALUES (?, ?)";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, shoppingListID);
+                    pstmt.setString(1, shoppingListUUID);
                     pstmt.setString(2, shoppingListName);
                     pstmt.executeUpdate();
                     return true;

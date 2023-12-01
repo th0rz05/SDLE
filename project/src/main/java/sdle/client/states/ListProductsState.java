@@ -7,23 +7,24 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 public class ListProductsState implements State {
     private final Scanner scanner = new Scanner(System.in);
 
     private final String user;
-    private int listId;
+    private String listUUID;
 
-    public ListProductsState(String user, int listId) {
+    public ListProductsState(String user, String listUUID) {
         this.user = user;
-        this.listId = listId;
+        this.listUUID = listUUID;
     }
 
     @Override
     public State run() {
-
-        if(listId == 0) {
+        //see if null
+        if (listUUID == null){
             // Get input for the shopping list ID
             System.out.print("Enter the shopping list name: ");
             String listName = scanner.nextLine().trim();
@@ -37,11 +38,12 @@ public class ListProductsState implements State {
                 return new MenuState(user);
             }
 
-            listId = getListId(listName);
+            listUUID = getListUUID(listName);
         }
 
         // Display products in the specified list
-        displayListProducts(listId);
+        Utils.displayListProducts(user,listUUID);
+
 
         while (true) {
             displayOptions();
@@ -50,19 +52,19 @@ public class ListProductsState implements State {
             switch (input) {
                 case "1" -> {
                     Utils.clearConsole();
-                    return new AddProductState(user,listId);
+                    return new AddProductState(user,listUUID);
                 }
                 case "2" -> {
                     Utils.clearConsole();
-                    return new RemoveProductState(user,listId);
+                    return new RemoveProductState(user,listUUID);
                 }
                 case "3" -> {
                     Utils.clearConsole();
-                    return new UpdateProductState(user,listId);
+                    return new UpdateProductState(user,listUUID);
                 }
                 case "4" -> {
                     Utils.clearConsole();
-                    return new DeleteListState(user,listId);
+                    return new DeleteListState(user,listUUID);
                 }
                 case "q" -> {
                     Utils.clearConsole();
@@ -77,49 +79,25 @@ public class ListProductsState implements State {
         }
     }
 
-    private int getListId(String listName) {
+    private String getListUUID(String listName) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "SELECT id FROM shopping_lists WHERE list_name = ?";
+                String sql = "SELECT list_uuid FROM shopping_lists WHERE list_name = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                     pstmt.setString(1, listName);
                     ResultSet rs = pstmt.executeQuery();
 
-                    return rs.getInt("id");
+                    return rs.getString("list_uuid");
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error fetching shopping list ID: " + e.getMessage());
         }
 
-        return -1;
-    }
-
-    private void displayListProducts(int listId) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
-
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "SELECT product_name, quantity FROM list_products WHERE list_id = ?";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setInt(1, listId);
-                    ResultSet rs = pstmt.executeQuery();
-
-                    System.out.println("------ Products in the Shopping List ------");
-                    while (rs.next()) {
-                        String productName = rs.getString("product_name");
-                        int quantity = rs.getInt("quantity");
-                        System.out.println("Product: " + productName + ", Quantity: " + quantity);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error fetching products in the shopping list: " + e.getMessage());
-        }
+        return null;
     }
 
     private void displayOptions() {

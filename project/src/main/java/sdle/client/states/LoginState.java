@@ -50,18 +50,18 @@ public class LoginState implements State {
                 File dbFile = new File(username + "_shopping.db");
                 if (!dbFile.exists()) {
                     String createListsTable = "CREATE TABLE IF NOT EXISTS shopping_lists ("
-                            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                            + "list_uuid TEXT NOT NULL,"
-                            + "list_name TEXT NOT NULL"
+                            + "list_uuid TEXT PRIMARY KEY,"
+                            + "list_name TEXT UNIQUE NOT NULL"
                             + ");";
 
                     String createProductsTable = "CREATE TABLE IF NOT EXISTS list_products ("
-                            + "product_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                            + "list_id INTEGER NOT NULL,"
+                            + "list_uuid TEXT NOT NULL,"
                             + "product_name TEXT NOT NULL,"
                             + "quantity INTEGER NOT NULL,"
-                            + "FOREIGN KEY (list_id) REFERENCES shopping_lists(id)"
+                            + "PRIMARY KEY (list_uuid, product_name),"
+                            + "FOREIGN KEY (list_uuid) REFERENCES shopping_lists(list_uuid)"
                             + ");";
+
 
                     try (Statement stmt = conn.createStatement()) {
                         stmt.execute(createListsTable);
@@ -82,7 +82,8 @@ public class LoginState implements State {
             socket.connect(SERVER_ADDRESS);
 
             // Sending the username to the server
-            socket.send(username.getBytes(ZMQ.CHARSET), 0);
+            String message = "login;" + username;
+            socket.send(message.getBytes(ZMQ.CHARSET), 0);
 
             // Waiting for a response (optional, based on server logic)
             byte[] response = socket.recv(0);

@@ -1,5 +1,8 @@
 package sdle.client.states;
 
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 import sdle.client.utils.Utils;
 
 import java.sql.Connection;
@@ -9,14 +12,14 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class AddProductState implements State {
-    private final int listId;
+    private final String listUUID;
 
     private final String user;
     private final Scanner scanner = new Scanner(System.in);
 
-    public AddProductState(String user, int listId) {
+    public AddProductState(String user, String listUUID) {
         this.user = user;
-        this.listId = listId;
+        this.listUUID = listUUID;
     }
 
     @Override
@@ -26,12 +29,12 @@ public class AddProductState implements State {
         String productName = scanner.nextLine().trim();
 
         // See if the product already exists in the list
-        if (productExistsInList(listId, productName)) {
+        if (productExistsInList(listUUID, productName)) {
             System.out.println("Product already exists in the shopping list.");
             System.out.println("Press enter to continue...");
             scanner.nextLine();
             Utils.clearConsole();
-            return new ListProductsState(user,listId);
+            return new ListProductsState(user,listUUID);
         }
 
         System.out.print("Enter the quantity: ");
@@ -43,11 +46,12 @@ public class AddProductState implements State {
             System.out.println("Press enter to continue...");
             scanner.nextLine();
             Utils.clearConsole();
-            return new ListProductsState(user,listId);
+            return new ListProductsState(user,listUUID);
         }
 
         // Save the product to the list
-        if (addProductToList(listId, productName, quantity)) {
+        if (addProductToList(listUUID, productName, quantity)) {
+            Utils.updateShoppingListInServer(user,listUUID);
             System.out.println("Product added to the shopping list.");
         } else {
             System.out.println("Failed to add product to the shopping list.");
@@ -56,18 +60,18 @@ public class AddProductState implements State {
         Utils.clearConsole();
 
         // Transition back to the menu state
-        return new ListProductsState(user,listId);
+        return new ListProductsState(user,listUUID);
     }
 
-    private boolean productExistsInList(int listId, String productName) {
+    private boolean productExistsInList(String listUUID, String productName) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "SELECT * FROM list_products WHERE list_id = ? AND product_name = ?";
+                String sql = "SELECT * FROM list_products WHERE list_uuid = ? AND product_name = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setInt(1, listId);
+                    pstmt.setString(1, listUUID);
                     pstmt.setString(2, productName);
                     return pstmt.executeQuery().next();
                 }
@@ -78,15 +82,15 @@ public class AddProductState implements State {
         return false;
     }
 
-    private boolean addProductToList(int listId, String productName, int quantity) {
+    private boolean addProductToList(String listUUID, String productName, int quantity) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "INSERT INTO list_products (list_id, product_name, quantity) VALUES (?, ?, ?)";
+                String sql = "INSERT INTO list_products (list_uuid, product_name, quantity) VALUES (?, ?, ?)";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setInt(1, listId);
+                    pstmt.setString(1, listUUID);
                     pstmt.setString(2, productName);
                     pstmt.setInt(3, quantity);
                     pstmt.executeUpdate();
@@ -98,4 +102,5 @@ public class AddProductState implements State {
         }
         return false;
     }
+
 }

@@ -10,21 +10,21 @@ import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class DeleteListState implements State {
-    private final int listId;
+    private final String listUUID;
 
     private final String user;
     private final Scanner scanner = new Scanner(System.in);
 
-    public DeleteListState(String user, int listId) {
+    public DeleteListState(String user, String listUUID) {
         this.user = user;
-        this.listId = listId;
+        this.listUUID = listUUID;
     }
 
     @Override
     public State run() {
 
         // Get the list name
-        String listName = getListName(listId);
+        String listName = getListName(listUUID);
 
         // Confirm deletion with user
         System.out.println("Are you sure you want to delete the list: " + listName + "? (y/n)");
@@ -32,7 +32,7 @@ public class DeleteListState implements State {
 
         if (confirmation.equals("y")) {
             // Delete the list
-            if (deleteList(listId)) {
+            if (deleteList(listUUID)) {
                 System.out.println("Shopping list deleted.");
             } else {
                 System.out.println("Failed to delete shopping list.");
@@ -51,16 +51,16 @@ public class DeleteListState implements State {
         return new MenuState(user);
     }
 
-    private String getListName(int listId) {
+    private String getListName(String listUUID) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
         String listName = null;
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "SELECT list_name FROM shopping_lists WHERE id = ?";
+                String sql = "SELECT list_name FROM shopping_lists WHERE list_uuid = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setInt(1, listId);
+                    pstmt.setString(1, listUUID);
                     ResultSet rs = pstmt.executeQuery();
 
                     if (rs.next()) {
@@ -75,23 +75,23 @@ public class DeleteListState implements State {
         return listName;
     }
 
-    private boolean deleteList(int listId) {
+    private boolean deleteList(String listUUID) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String deleteProductsSql = "DELETE FROM list_products WHERE list_id = ?";
-                String deleteListSql = "DELETE FROM shopping_lists WHERE id = ?";
+                String deleteProductsSql = "DELETE FROM list_products WHERE list_uuid = ?";
+                String deleteListSql = "DELETE FROM shopping_lists WHERE list_uuid = ?";
 
                 // Delete products associated with the list
                 try (PreparedStatement pstmtProducts = connection.prepareStatement(deleteProductsSql)) {
-                    pstmtProducts.setInt(1, listId);
+                    pstmtProducts.setString(1, listUUID);
                     pstmtProducts.executeUpdate();
                 }
 
                 // Delete the list
                 try (PreparedStatement pstmtList = connection.prepareStatement(deleteListSql)) {
-                    pstmtList.setInt(1, listId);
+                    pstmtList.setString(1, listUUID);
                     int rowsAffected = pstmtList.executeUpdate();
                     return rowsAffected > 0;
                 }
