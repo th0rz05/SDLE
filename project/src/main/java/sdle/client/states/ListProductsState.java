@@ -41,6 +41,8 @@ public class ListProductsState implements State {
             listUUID = getListUUID(listName);
         }
 
+        Utils.getListFromServer(user,listUUID);
+
         // Display products in the specified list
         Utils.displayListProducts(user,listUUID);
 

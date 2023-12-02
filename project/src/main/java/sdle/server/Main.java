@@ -87,7 +87,7 @@ public class Main {
                     pstmt.setString(1, null);
                     pstmt.setString(2, listUUID);
                     pstmt.setString(3, listName);
-                    pstmt.setString(4, "{}");
+                    pstmt.setString(4, "[]");
                     pstmt.executeUpdate();
                 }
             }

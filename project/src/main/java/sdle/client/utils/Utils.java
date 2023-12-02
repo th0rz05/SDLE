@@ -8,6 +8,7 @@ import sdle.client.Product;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Utils {
@@ -77,6 +78,26 @@ public class Utils {
         return gson.toJson(products);
     }
 
+    public static boolean shoppingListExists(String user, String shoppingListName) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "SELECT * FROM shopping_lists WHERE list_name = ?";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, shoppingListName);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        return rs.next();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking if Shopping List exists: " + e.getMessage());
+        }
+        return false;
+    }
+
     public static void updateShoppingListInServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
@@ -109,7 +130,90 @@ public class Utils {
         }
     }
 
-    public static boolean getListFromServer(String user, String shoppingListUUID) {
+    public static boolean productExistsInList(String user,String listUUID, String productName) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "SELECT * FROM list_products WHERE list_uuid = ? AND product_name = ?";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.setString(2, productName);
+                    return pstmt.executeQuery().next();
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking if product exists in the shopping list: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public static boolean addProductToList(String user, String listUUID, String productName, int quantity) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "INSERT INTO list_products (list_uuid, product_name, quantity) VALUES (?, ?, ?)";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.setString(2, productName);
+                    pstmt.setInt(3, quantity);
+                    pstmt.executeUpdate();
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error adding product to the shopping list: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public static boolean updateProductInList(String user,String listUUID, String productName, int newQuantity) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "UPDATE list_products SET quantity = ? WHERE list_uuid = ? AND product_name = ?";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setInt(1, newQuantity);
+                    pstmt.setString(2, listUUID);
+                    pstmt.setString(3, productName);
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    return rowsAffected > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error updating product in the shopping list: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public static boolean removeProductFromList(String user,String listUUID, String productName) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "DELETE FROM list_products WHERE list_uuid = ? AND product_name = ?";
+
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.setString(2, productName);
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    return rowsAffected > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error removing product from the shopping list: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public static void getListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(SERVER_ADDRESS);
@@ -120,8 +224,67 @@ public class Utils {
 
             // Receive acknowledgment from the server (optional)
             byte[] reply = socket.recv();
-            System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
-            return true;
+            String list = new String(reply, ZMQ.CHARSET);
+
+            System.out.println("Received reply from server: " + list);
+
+            //separate the list name from the list content
+            String[] listParts = list.split(";");
+            String listName = listParts[1];
+            list = listParts[2];
+
+
+
+            // Save the list in the database
+            saveListInDatabase(user,listName,shoppingListUUID, list);
+
+        }
+    }
+
+    private static void saveListInDatabase(String user, String listName, String shoppingListUUID, String list) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        //if list doesn't exist, create it (see if name already exists)
+        if (!shoppingListExists(user, listName)) {
+            try (Connection connection = DriverManager.getConnection(url)) {
+                if (connection != null) {
+                    String sql = "INSERT INTO shopping_lists (list_uuid, list_name) VALUES (?, ?)";
+
+                    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                        pstmt.setString(1, shoppingListUUID);
+                        pstmt.setString(2, listName);
+                        pstmt.executeUpdate();
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println("Error saving Shopping List to the database: " + e.getMessage());
+            }
+        }
+
+        if(list.equals("[]")) {
+            return;
+        }
+
+        // separate the list in { and }
+        list = list.substring(1, list.length() - 1);
+
+        // separate the products in commas where { is before the comma
+        String[] products = list.split(",(?=\\{)");
+
+        // for each product, separate the name and quantity
+        for (String product : products) {
+
+            // transform the product into a Product object
+            Product productObj = gson.fromJson(product, Product.class);
+
+            // if the product already exists in the list, update it
+            if (productExistsInList(user,shoppingListUUID, productObj.getName())) {
+                updateProductInList(user,shoppingListUUID, productObj.getName(), productObj.getQuantity());
+            } else {
+                // if the product doesn't exist in the list, add it
+                addProductToList(user,shoppingListUUID, productObj.getName(), productObj.getQuantity());
+            }
+
         }
     }
 }

@@ -5,17 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add users for the local side and started a server that listens to usernames">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/guilherme_shopping.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/DownloadListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DownloadListState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
@@ -59,26 +54,26 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2YcOHdPcZsHB1Kju8Naa3S03KXO" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="sdle.states" />

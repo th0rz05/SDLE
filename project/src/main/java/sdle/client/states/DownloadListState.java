@@ -23,11 +23,8 @@ public class DownloadListState implements State{
         String shoppingListUUID = scanner.nextLine().trim();
 
         // Perform actions for downloading a shopping list here
-        if (Utils.getListFromServer(user,shoppingListUUID)) {
-            System.out.println("Shopping List downloaded with ID: " + shoppingListUUID);
-        } else {
-            System.out.println("Failed to download Shopping List from the server.");
-        }
+        Utils.getListFromServer(user,shoppingListUUID);
+        System.out.println("Shopping List downloaded with ID: " + shoppingListUUID);
 
         return new ListProductsState(user,shoppingListUUID);
 

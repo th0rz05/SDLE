@@ -28,7 +28,7 @@ public class CreateListState implements State {
 
 
         // See if the shopping list already exists
-        if (shoppingListExists(shoppingListName)) {
+        if (Utils.shoppingListExists(user, shoppingListName)){
             System.out.println("Shopping List already exists.");
             System.out.println("Press enter to continue...");
             scanner.nextLine();
@@ -57,25 +57,6 @@ public class CreateListState implements State {
         return new MenuState(user);
     }
 
-    private boolean shoppingListExists(String shoppingListName) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
-
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "SELECT * FROM shopping_lists WHERE list_name = ?";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, shoppingListName);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        return rs.next();
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking if Shopping List exists: " + e.getMessage());
-        }
-        return false;
-    }
 
     private String generateUniqueID() {
         return UUID.randomUUID().toString();

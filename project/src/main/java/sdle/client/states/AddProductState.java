@@ -1,14 +1,7 @@
 package sdle.client.states;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 import sdle.client.utils.Utils;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class AddProductState implements State {
@@ -29,7 +22,7 @@ public class AddProductState implements State {
         String productName = scanner.nextLine().trim();
 
         // See if the product already exists in the list
-        if (productExistsInList(listUUID, productName)) {
+        if (Utils.productExistsInList(user,listUUID, productName)) {
             System.out.println("Product already exists in the shopping list.");
             System.out.println("Press enter to continue...");
             scanner.nextLine();
@@ -50,7 +43,7 @@ public class AddProductState implements State {
         }
 
         // Save the product to the list
-        if (addProductToList(listUUID, productName, quantity)) {
+        if (Utils.addProductToList(user,listUUID, productName, quantity)) {
             Utils.updateShoppingListInServer(user,listUUID);
             System.out.println("Product added to the shopping list.");
         } else {
@@ -63,44 +56,6 @@ public class AddProductState implements State {
         return new ListProductsState(user,listUUID);
     }
 
-    private boolean productExistsInList(String listUUID, String productName) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "SELECT * FROM list_products WHERE list_uuid = ? AND product_name = ?";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, listUUID);
-                    pstmt.setString(2, productName);
-                    return pstmt.executeQuery().next();
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking if product exists in the shopping list: " + e.getMessage());
-        }
-        return false;
-    }
-
-    private boolean addProductToList(String listUUID, String productName, int quantity) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
-
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "INSERT INTO list_products (list_uuid, product_name, quantity) VALUES (?, ?, ?)";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, listUUID);
-                    pstmt.setString(2, productName);
-                    pstmt.setInt(3, quantity);
-                    pstmt.executeUpdate();
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error adding product to the shopping list: " + e.getMessage());
-        }
-        return false;
-    }
 
 }
