@@ -5,13 +5,19 @@
 Open the terminal in the project folder and run:
 
 ```bash
-./gradlew clean clientJar serverJar
+./gradlew clean clientJar serverJar routerJar
+```
+
+To run the router:
+
+```bash
+java -jar build/libs/router.jar
 ```
 
 Then to run the server:
 
 ```bash
-java -jar build/libs/server.jar
+java -jar build/libs/server.jar <id>
 ```
 
 And to run the client:

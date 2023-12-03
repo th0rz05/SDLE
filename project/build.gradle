@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'java'
     id 'application'
@@ -19,8 +21,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.8'
 }
 
-def clientMainClassName = 'sdle.client.Main'
-def serverMainClassName = 'sdle.server.Main'
+def clientMainClassName = 'sdle.client.Client'
+def serverMainClassName = 'sdle.server.Server'
+def routerMainClassName = 'sdle.router.Router'
 
 application {
     // Set the main class for the application (not necessary for shadowJar task)
@@ -28,7 +31,7 @@ application {
 }
 
 // Configuration for client JAR
-task clientJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+tasks.register('clientJar', ShadowJar) {
     archiveBaseName = 'client'
     manifest {
         attributes(
@@ -40,11 +43,23 @@ task clientJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
 }
 
 // Configuration for server JAR
-task serverJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+tasks.register('serverJar', ShadowJar) {
     archiveBaseName = 'server'
     manifest {
         attributes(
                 'Main-Class': serverMainClassName
+        )
+    }
+    from sourceSets.main.output
+    configurations = [project.configurations.runtimeClasspath]
+}
+
+// Configuration for router JAR
+tasks.register('routerJar', ShadowJar) {
+    archiveBaseName = 'router'
+    manifest {
+        attributes(
+                'Main-Class': routerMainClassName
         )
     }
     from sourceSets.main.output
@@ -59,6 +74,7 @@ tasks.test {
 configurations {
     clientImplementation.extendsFrom implementation
     serverImplementation.extendsFrom implementation
+    routerImplementation.extendsFrom implementation
 }
 
 dependencies {

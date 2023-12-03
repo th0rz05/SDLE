@@ -15,7 +15,7 @@ public class Utils {
 
     private static final Gson gson = new Gson();
 
-    private static final String SERVER_ADDRESS = "tcp://127.0.0.1:5555";
+    private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:6000";
 
     public static void clearConsole() {
         // Print multiple new lines to simulate clearing the console
@@ -101,7 +101,7 @@ public class Utils {
     public static void updateShoppingListInServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(SERVER_ADDRESS);
+            socket.connect(ROUTER_ADDRESS);
 
             String listProducts = getListProducts(user, shoppingListUUID);
 
@@ -118,7 +118,7 @@ public class Utils {
     public static void sendShoppingListToServer(String shoppingListUUID, String shoppingListName) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(SERVER_ADDRESS);
+            socket.connect(ROUTER_ADDRESS);
 
             // Construct the message with message type and content
             String message = "createList;" + shoppingListUUID + ";" + shoppingListName;
@@ -216,7 +216,7 @@ public class Utils {
     public static void getListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(SERVER_ADDRESS);
+            socket.connect(ROUTER_ADDRESS);
 
             // Construct the message with message type and content
             String message = "getList;" + shoppingListUUID;

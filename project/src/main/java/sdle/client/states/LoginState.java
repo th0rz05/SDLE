@@ -17,14 +17,11 @@ import org.zeromq.ZContext;
 public class LoginState implements State {
     private final Scanner scanner = new Scanner(System.in);
 
-    private final String SERVER_ADDRESS = "tcp://127.0.0.1:5555";
-
     @Override
     public State run() {
         System.out.print("Enter username: ");
         String username = scanner.nextLine().trim();
 
-        sendUsernameToServer(username);
 
         if (createUserDatabase(username)) {
             System.out.println("Database created/connected for user: " + username);
@@ -74,20 +71,5 @@ public class LoginState implements State {
             System.out.println("Error creating/connecting to database: " + e.getMessage());
         }
         return false;
-    }
-
-    private void sendUsernameToServer(String username) {
-        try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(SERVER_ADDRESS);
-
-            // Sending the username to the server
-            String message = "login;" + username;
-            socket.send(message.getBytes(ZMQ.CHARSET), 0);
-
-            // Waiting for a response (optional, based on server logic)
-            byte[] response = socket.recv(0);
-            System.out.println("Server response: " + new String(response, ZMQ.CHARSET));
-        }
     }
 }

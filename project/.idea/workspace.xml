@@ -6,15 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add users for the local side and started a server that listens to usernames">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/DownloadListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DownloadListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/guilherme_shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,8 +80,8 @@
     </key>
   </component>
   <component name="RunManager" selected="Gradle.project [clean serverJar]">
-    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="sdle.client.Main" />
+    <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sdle.client.Client" />
       <module name="project.main" />
       <extension name="coverage">
         <pattern>
@@ -188,7 +188,7 @@
         <item itemvalue="Gradle.project [clientJar]" />
         <item itemvalue="Gradle.project [serverJar]" />
         <item itemvalue="Gradle.project [clean clientJar]" />
-        <item itemvalue="Application.Main" />
+        <item itemvalue="Application.Client" />
         <item itemvalue="Gradle.project [clean serverJar]" />
       </list>
     </recent_temporary>

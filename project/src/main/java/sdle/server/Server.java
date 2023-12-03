@@ -6,54 +6,68 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
-public class Main {
+public class Server {
     public static void main(String[] args) {
+
+        if (args.length != 1) {
+            System.out.println("Usage: java -jar build/libs/server.jar <id>");
+            return;
+        }
+
+        int id,port;
+        try {
+            id = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid id number");
+            return;
+        }
+        port = 5000 + id;
+
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
-            socket.bind("tcp://*:5555");
+            socket.bind("tcp://*:" + port);
 
-            // Announce that the server is running
-            System.out.println("Server is running on port 5555\n\n");
+            System.out.println("Server listening on port " + port + "...");
 
             // Create the database
-            createDatabase();
+            createDatabase(id);
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] request = socket.recv();
                 String[] messageParts = new String(request, ZMQ.CHARSET).split(";");
 
-                String messageType = messageParts[0];
+                String messageType = messageParts[1];
 
-                if (messageType.equals("createList")) {
-                    // Process create list message
-                    handleCreateListMessage(messageParts[1], messageParts[2]);
-                    String response = "Received message of type: " + messageType;
-                    socket.send(response.getBytes(ZMQ.CHARSET));
-                } else if (messageType.equals("login")) {
-                    // Process login message
-                    handleLoginMessage(messageParts);
-                    String response = "Received message of type: " + messageType;
-                    socket.send(response.getBytes(ZMQ.CHARSET));
-                } else if(messageType.equals("updateList")) {
-                    // Process update list message
-                    handleUpdateListMessage(messageParts[1], messageParts[2]);
-                    String response = "Received message of type: " + messageType;
-                    socket.send(response.getBytes(ZMQ.CHARSET));
-                } else if(messageType.equals("getList")){
-                    // Process get list message
-                    String list = handleGetListMessage(messageParts[1]);
-                    socket.send(list.getBytes(ZMQ.CHARSET));
-                } else {
-                    System.out.println("Invalid message type.");
-                    String response = "Received message of type: " + messageType;
-                    socket.send(response.getBytes(ZMQ.CHARSET));
+                switch (messageType) {
+                    case "createList" -> {
+                        // Process create list message
+                        handleCreateListMessage(id,messageParts[0], messageParts[2], messageParts[3]);
+                        String response = "Received message of type: " + messageType;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
+                    case "updateList" -> {
+                        // Process update list message
+                        handleUpdateListMessage(id,messageParts[2], messageParts[3]);
+                        String response = "Received message of type: " + messageType;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
+                    case "getList" -> {
+                        // Process get list message
+                        String list = handleGetListMessage(id,messageParts[2]);
+                        socket.send(list.getBytes(ZMQ.CHARSET));
+                    }
+                    default -> {
+                        System.out.println("Invalid message type.");
+                        String response = "Received message of type: " + messageType;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
                 }
             }
         }
     }
 
-    private static void createDatabase() {
-        String url = "jdbc:sqlite:database/server/server.db";
+    private static void createDatabase(int id) {
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
@@ -74,17 +88,16 @@ public class Main {
         }
     }
 
-    private static void handleCreateListMessage(String listUUID, String listName) {
+    private static void handleCreateListMessage(int id,String virtualNode,String listUUID, String listName) {
         System.out.println("Creating list...");
 
-        //store in database with virtualnode_id set to null and list_content set to an empty JSON object
-        String url = "jdbc:sqlite:database/server/server.db";
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 String sql = "INSERT INTO shopping_lists (virtualnode_id, list_uuid, list_name, list_content) VALUES (?, ?, ?, ?)";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                    pstmt.setString(1, null);
+                    pstmt.setString(1, virtualNode);
                     pstmt.setString(2, listUUID);
                     pstmt.setString(3, listName);
                     pstmt.setString(4, "[]");
@@ -100,11 +113,11 @@ public class Main {
 
     }
 
-    private static void handleUpdateListMessage(String listUUID, String listContent) {
+    private static void handleUpdateListMessage(int id,String listUUID, String listContent) {
         System.out.println("Updating list...");
 
         //store in database with virtualnode_id set to null and list_content set to an empty JSON object
-        String url = "jdbc:sqlite:database/server/server.db";
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
@@ -124,11 +137,11 @@ public class Main {
 
     }
 
-    private static String handleGetListMessage(String listUUID) {
+    private static String handleGetListMessage(int id,String listUUID) {
         System.out.println("Getting list...");
 
        // get the list name and products and send it to the client
-        String url = "jdbc:sqlite:database/server/server.db";
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
         String listContent = null;
         String listName = null;
 
@@ -149,12 +162,6 @@ public class Main {
         }
 
         return String.join(";",listUUID,listName, listContent);
-    }
-
-    private static void handleLoginMessage(String[] messageParts) {
-        System.out.println("Logging in...");
-        // print the message
-        System.out.println("Received message: " + String.join(";", messageParts));
     }
 }
 

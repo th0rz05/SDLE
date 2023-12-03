@@ -1,10 +1,9 @@
 package sdle.client;
 
 import sdle.client.states.LoginState;
-import sdle.client.states.MenuState;
 import sdle.client.states.State;
 
-public class Main {
+public class Client {
     public static void main(String[] args) {
 
         State state = new LoginState();
