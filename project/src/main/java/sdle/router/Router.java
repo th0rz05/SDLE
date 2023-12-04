@@ -17,6 +17,8 @@ public class Router {
 
     private final List<Pair<String, Integer>> hashRing;
 
+    private final List<Integer> serverIds = new ArrayList<>();
+
     public Router(int numberOfServers, int virtualNodesPerServer) {
         hashRing = createHashRing(numberOfServers, virtualNodesPerServer);
     }
@@ -24,6 +26,8 @@ public class Router {
     private List<Pair<String, Integer>> createHashRing(int numberOfServers, int virtualNodesPerServer) {
         List<Pair<String, Integer>> ring = new ArrayList<>();
         for (int i = 1; i <= numberOfServers; i++) {
+            //add id to list
+            serverIds.add(i);
             for (int j = 1; j <= virtualNodesPerServer; j++) {
                 String serverNode = "S" + i + "V" + j;
                 int hash = getSHA256Hash(serverNode) % 1000; // Modulo 100
@@ -87,6 +91,12 @@ public class Router {
 
                 String[] messageParts = receivedMessage.split(";");
 
+                if(messageParts[0].equals("JoinHashRing")){
+                    addServerToHashRing(messageParts[1]);
+                    sendHashRingToServers("updateHashRing");
+                    continue;
+                }
+
                 // Split the received message into parts
                 String listUUID = messageParts[1];
 
@@ -119,23 +129,34 @@ public class Router {
         }
     }
 
+    public void addServerToHashRing(String serverId){
+        int serverIdInt = Integer.parseInt(serverId);
+        serverIds.add(serverIdInt);
+        for (int i = 1; i <= 3; i++) {
+            String serverNode = "S" + serverIdInt + "V" + i;
+            int hash = getSHA256Hash(serverNode) % 1000; // Modulo 100
+            hashRing.add(new Pair<>(serverNode, hash));
+        }
+        hashRing.sort(Comparator.comparingInt(Pair::right));
+    }
+
     public String getHashRingAsString() {
         StringBuilder sb = new StringBuilder();
         for (Pair<String, Integer> pair : hashRing) {
-            sb.append(pair.left()).append(",").append(pair.right()).append(";");
+            sb.append(pair.left()).append(",").append(pair.right()).append(":");
         }
         return sb.toString();
     }
 
-    public void sendHashRingToServers(int numberOfServers) {
+    public void sendHashRingToServers(String method) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
 
-            for (int i = 1; i <= numberOfServers; i++) {
-                int serverPort = i + SERVER_BASE_PORT;
+            for (Integer serverId : serverIds) {
+                int serverPort = serverId + SERVER_BASE_PORT;
                 socket.connect("tcp://localhost:" + serverPort);
 
-                String message = getHashRingAsString();
+                String message = "null;" + method + ";" + getHashRingAsString();
 
                 System.out.println("Sending message to server: " + message);
 
@@ -148,6 +169,7 @@ public class Router {
                 System.out.println("Received response from server: " + responseMessage);
 
                 socket.disconnect("tcp://localhost:" + serverPort);
+
             }
         }
     }
@@ -158,7 +180,7 @@ public class Router {
         int virtualNodesPerServer = 3; // Change this to the desired number of virtual nodes per server
 
         Router router = new Router(numberOfServers, virtualNodesPerServer);
-        router.sendHashRingToServers(numberOfServers);
+        router.sendHashRingToServers("createHashRing");
         router.startRouter();
     }
 

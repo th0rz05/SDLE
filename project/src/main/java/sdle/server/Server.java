@@ -20,51 +20,50 @@ public class Server {
 
     public static void main(String[] args) {
 
-        if (args.length != 1) {
-            System.out.println("Usage: java -jar build/libs/server.jar <id>");
+        if (args.length < 1) {
+            System.out.println("Usage: java -jar build/libs/server.jar <id> [joinHashRing]");
             return;
         }
 
         int id, port;
+        boolean joinHashRing = false;
         try {
             id = Integer.parseInt(args[0]);
+            if (args.length > 1 && args[1].equals("joinHashRing")) {
+                joinHashRing = true;
+            }
         } catch (NumberFormatException e) {
             System.out.println("Invalid id number");
             return;
         }
+
         port = 5000 + id;
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REP);
+
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect("tcp://localhost:6000"); // Connect to the router
+
+            if (joinHashRing) {
+                // Send a message to the router indicating participation in the hash ring
+                String message = "JoinHashRing;" + id;
+                socket.send(message.getBytes(ZMQ.CHARSET));
+            }
+
+            socket = context.createSocket(SocketType.REP);
             socket.bind("tcp://*:" + port);
+
 
             System.out.println("Server listening on port " + port + "...");
 
             // Create the database
             createDatabase(id);
 
-            // receive the hash ring from the router
-            byte[] routerRequest = socket.recv();
-            String routerMessage = new String(routerRequest, ZMQ.CHARSET);
-
-            String[] hashRingParts = routerMessage.split(";");
-
-            // print the message
-            System.out.println("Received message: " + routerMessage);
-
-            hashRing = getHashRing(hashRingParts);
-
-            // send the hash ring to the router
-            String routerResponse = "Received hash ring";
-            socket.send(routerResponse.getBytes(ZMQ.CHARSET));
-
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] request = socket.recv();
                 String[] messageParts = new String(request, ZMQ.CHARSET).split(";");
 
                 String messageType = messageParts[1];
-
-
 
                 switch (messageType) {
                     case "createList" -> {
@@ -76,14 +75,14 @@ public class Server {
                     }
                     case "updateList" -> {
                         // Process update list message
-                        handleUpdateListMessage(id, messageParts[2], messageParts[3]);
+                        handleUpdateListMessage(id,messageParts[0], messageParts[2], messageParts[3]);
                         updateListToReplicationNodes(id,messageParts[2], messageParts[3]);
                         String response = "Received message of type: " + messageType;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "getList" -> {
                         // Process get list message
-                        String list = handleGetListMessage(id, messageParts[2]);
+                        String list = handleGetListMessage(id,messageParts[0],messageParts[2]);
                         socket.send(list.getBytes(ZMQ.CHARSET));
                     }
                     case "replicateCreationList" -> {
@@ -94,7 +93,19 @@ public class Server {
                     }
                     case "replicateUpdateList" -> {
                         // Process replicate list message
-                        handleReplicateUpdateListMessage(id, messageParts[2], messageParts[3]);
+                        handleReplicateUpdateListMessage(id, messageParts[0], messageParts[2], messageParts[3]);
+                        String response = "Received message of type: " + messageType;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
+                    case "createHashRing" -> {
+                        // Process create hash ring message
+                        handleCreateHashRingMessage(messageParts[2]);
+                        String response = "Received message of type: " + messageType;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
+                    case "updateHashRing" -> {
+                        // Process update hash ring message
+                        handleUpdateHashRingMessage(messageParts[2]);
                         String response = "Received message of type: " + messageType;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
@@ -125,7 +136,8 @@ public class Server {
             String virtualNode = node.substring(3);
 
             if(port == 5000 + id) {
-                System.out.println("Same server, skipping..."); //TODO maybe fix this
+                System.out.println("Same server, updating in database...");
+                handleReplicateUpdateListMessage(id, virtualNode, listUUID, listContent);
                 continue;
             }
 
@@ -162,7 +174,8 @@ public class Server {
             String virtualNode = node.substring(3);
 
             if(port == 5000 + id) {
-                System.out.println("Same server, skipping..."); //TODO maybe fix this
+                System.out.println("Same server, storing in database...");
+                handleReplicateCreationListMessage(id, virtualNode, listUUID, listName, listContent);
                 continue;
             }
 
@@ -202,9 +215,11 @@ public class Server {
     }
 
     public static String getResponsibleServer(String listUUID) {
+        System.out.println("Getting responsible server...");
+        System.out.println("hashRing: " + hashRing);
         int hash = getSHA256Hash(listUUID) % 1000; // Modulo 100
         System.out.println("Hash: " + hash);
-        for (Server.Pair<String, Integer> pair : hashRing) {
+        for (Pair<String, Integer> pair : hashRing) {
             if (hash <= pair.right()) {
                 return pair.left();
             }
@@ -213,9 +228,11 @@ public class Server {
     }
 
     public static String getNodesForReplication(String node, int numberOfNodes) {
+        System.out.println("Getting nodes for replication...");
+        System.out.println("node: " + node);
         // find node in hash ring
         int index = 0;
-        for (Server.Pair<String, Integer> pair : hashRing) {
+        for (Pair<String, Integer> pair : hashRing) {
             if (pair.left().equals(node)) {
                 break;
             }
@@ -231,8 +248,8 @@ public class Server {
 
     }
 
-    private static List<Server.Pair<String, Integer>> getHashRing(String[] hashRingParts) {
-        List<Server.Pair<String, Integer>> hashRing = new ArrayList<>();
+    private static List<Pair<String, Integer>> getHashRing(String[] hashRingParts) {
+        List<Pair<String, Integer>> hashRing = new ArrayList<>();
         for (String hashRingPart : hashRingParts) {
             String[] pair = hashRingPart.split(",");
             hashRing.add(new Pair<>(pair[0], Integer.parseInt(pair[1])));
@@ -247,9 +264,10 @@ public class Server {
             if (conn != null) {
                 String sql = "CREATE TABLE IF NOT EXISTS shopping_lists ("
                         + "virtualnode_id TEXT,"
-                        + "list_uuid TEXT PRIMARY KEY,"
+                        + "list_uuid TEXT,"
                         + "list_name TEXT,"
-                        + "list_content TEXT"
+                        + "list_content TEXT,"
+                        + "PRIMARY KEY (virtualnode_id, list_uuid)"
                         + ")";
 
                 try (Statement stmt = conn.createStatement()) {
@@ -287,18 +305,18 @@ public class Server {
 
     }
 
-    private static void handleUpdateListMessage(int id, String listUUID, String listContent) {
+    private static void handleUpdateListMessage(int id,String virtualNode, String listUUID, String listContent) {
         System.out.println("Updating list...");
 
-        //store in database with virtualnode_id set to null and list_content set to an empty JSON object
         String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
-                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ?";
+                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ? AND virtualnode_id = ?";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                     pstmt.setString(1, listContent);
                     pstmt.setString(2, listUUID);
+                    pstmt.setString(3, virtualNode);
                     pstmt.executeUpdate();
                 }
             }
@@ -311,7 +329,7 @@ public class Server {
 
     }
 
-    private static String handleGetListMessage(int id, String listUUID) {
+    private static String handleGetListMessage(int id,String virtualNode, String listUUID) {
         System.out.println("Getting list...");
 
         // get the list name and products and send it to the client
@@ -321,9 +339,10 @@ public class Server {
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
-                String sql = "SELECT list_name, list_content FROM shopping_lists WHERE list_uuid = ?";
+                String sql = "SELECT list_name, list_content FROM shopping_lists WHERE list_uuid = ? AND virtualnode_id = ?";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                     pstmt.setString(1, listUUID);
+                    pstmt.setString(2, virtualNode);
                     ResultSet rs = pstmt.executeQuery();
                     if (rs.next()) {
                         listName = rs.getString("list_name");
@@ -363,7 +382,7 @@ public class Server {
 
     }
 
-    private static void handleReplicateUpdateListMessage(int id, String listUUID, String listContent) {
+    private static void handleReplicateUpdateListMessage(int id, String virtualNode, String listUUID, String listContent) {
         System.out.println("Replicating update of list...");
 
         //store in database with virtualnode_id set to null and list_content set to an empty JSON object
@@ -371,10 +390,11 @@ public class Server {
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
-                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ?";
+                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ? AND virtualnode_id = ?";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                     pstmt.setString(1, listContent);
                     pstmt.setString(2, listUUID);
+                    pstmt.setString(3, virtualNode);
                     pstmt.executeUpdate();
                 }
             }
@@ -384,6 +404,20 @@ public class Server {
 
         // print the message
         System.out.println("Received message: " + String.join(";", listUUID, listContent));
+
+    }
+
+    private static void handleCreateHashRingMessage(String hashRingString) {
+        System.out.println("Creating hash ring...");
+
+        hashRing = getHashRing(hashRingString.split(":"));
+
+    }
+
+    private static void handleUpdateHashRingMessage(String hashRingString) {
+        System.out.println("Updating hash ring...");
+
+        hashRing = getHashRing(hashRingString.split(":"));
 
     }
 
