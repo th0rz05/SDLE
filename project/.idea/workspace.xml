@@ -6,15 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add users for the local side and started a server that listens to usernames">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/guilherme_shopping.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

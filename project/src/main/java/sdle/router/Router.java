@@ -119,12 +119,46 @@ public class Router {
         }
     }
 
+    public String getHashRingAsString() {
+        StringBuilder sb = new StringBuilder();
+        for (Pair<String, Integer> pair : hashRing) {
+            sb.append(pair.left()).append(",").append(pair.right()).append(";");
+        }
+        return sb.toString();
+    }
+
+    public void sendHashRingToServers(int numberOfServers) {
+        try (ZContext context = new ZContext()) {
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+
+            for (int i = 1; i <= numberOfServers; i++) {
+                int serverPort = i + SERVER_BASE_PORT;
+                socket.connect("tcp://localhost:" + serverPort);
+
+                String message = getHashRingAsString();
+
+                System.out.println("Sending message to server: " + message);
+
+                socket.send(message.getBytes(ZMQ.CHARSET));
+
+                byte[] response = socket.recv();
+
+                String responseMessage = new String(response, ZMQ.CHARSET);
+
+                System.out.println("Received response from server: " + responseMessage);
+
+                socket.disconnect("tcp://localhost:" + serverPort);
+            }
+        }
+    }
+
 
     public static void main(String[] args) {
         int numberOfServers = 4; // Change this to the desired number of servers
         int virtualNodesPerServer = 3; // Change this to the desired number of virtual nodes per server
 
         Router router = new Router(numberOfServers, virtualNodesPerServer);
+        router.sendHashRingToServers(numberOfServers);
         router.startRouter();
     }
 
