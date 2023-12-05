@@ -292,13 +292,13 @@ public class Server {
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 String sql = "CREATE TABLE IF NOT EXISTS shopping_lists ("
+                        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                         + "virtualnode_id TEXT,"
                         + "list_uuid TEXT,"
                         + "list_name TEXT,"
                         + "list_content TEXT,"
                         + "replicated INTEGER DEFAULT 0,"
-                        + "to_delete INTEGER DEFAULT 0,"
-                        + "PRIMARY KEY (virtualnode_id, list_uuid,to_delete)"
+                        + "to_delete INTEGER DEFAULT 0"
                         + ")";
 
                 try (Statement stmt = conn.createStatement()) {
@@ -556,10 +556,12 @@ public class Server {
             }
             // ask for replication of lists of level 0
             keys = handleGetKeysMessage(id, String.valueOf(i), "0");
+            System.out.println("Keys: " + keys);
             keysArray = keys.split("/");
             for (String key : keysArray) {
                 String[] keyParts = key.split(";");
                 String listUUID = keyParts[0];
+                System.out.println("List UUID: " + listUUID);
                 String listName = keyParts[1];
                 String listContent = keyParts[2];
                 sendListToReplicationNodes(id,listUUID, listName, listContent);
