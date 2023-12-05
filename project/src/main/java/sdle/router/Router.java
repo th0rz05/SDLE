@@ -175,6 +175,54 @@ public class Router {
                 socket.disconnect("tcp://localhost:" + serverPort);
 
             }
+
+            if(method.equals("createHashRing")){
+                return;
+            }
+
+            //for every server send deleteKeys message
+            for (Integer serverId : serverIds) {
+                int serverPort = serverId + SERVER_BASE_PORT;
+                socket.connect("tcp://localhost:" + serverPort);
+
+                String message = "null;deleteKeys";
+
+                System.out.println("Sending message to server: " + message);
+
+                socket.send(message.getBytes(ZMQ.CHARSET));
+
+                byte[] response = socket.recv();
+
+                String responseMessage = new String(response, ZMQ.CHARSET);
+
+                System.out.println("Received response from server: " + responseMessage);
+
+                socket.disconnect("tcp://localhost:" + serverPort);
+
+            }
+
+            //send replicateKeys message
+            for (Integer serverId : serverIds) {
+                int serverPort = serverId + SERVER_BASE_PORT;
+                socket.connect("tcp://localhost:" + serverPort);
+
+                String message = "null;replicateKeys";
+
+                System.out.println("Sending message to server: " + message);
+
+                socket.send(message.getBytes(ZMQ.CHARSET));
+
+                byte[] response = socket.recv();
+
+                String responseMessage = new String(response, ZMQ.CHARSET);
+
+                System.out.println("Received response from server: " + responseMessage);
+
+                socket.disconnect("tcp://localhost:" + serverPort);
+
+            }
+
+            System.out.println("Hash ring sent to all servers");
         }
     }
 

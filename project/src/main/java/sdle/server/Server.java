@@ -78,14 +78,14 @@ public class Server {
                         // Process create list message
                         handleCreateListMessage(id, messageParts[0], messageParts[2], messageParts[3]);
                         sendListToReplicationNodes(id,messageParts[2], messageParts[3],"[]");
-                        String response = "Received message of type: " + messageType;
+                        String response = "Created list in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "updateList" -> {
                         // Process update list message
                         handleUpdateListMessage(id,messageParts[0], messageParts[2], messageParts[3]);
                         updateListToReplicationNodes(id,messageParts[2], messageParts[3]);
-                        String response = "Received message of type: " + messageType;
+                        String response = "Updated list in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "getList" -> {
@@ -97,31 +97,41 @@ public class Server {
                         // Process replicate list message
                         handleReplicateCreationListMessage(id, messageParts[0], messageParts[2], messageParts[3],
                                 messageParts[4],messageParts[5]);
-                        String response = "Received message of type: " + messageType;
+                        String response = "Replicated creation of list in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "replicateUpdateList" -> {
                         // Process replicate list message
                         handleReplicateUpdateListMessage(id, messageParts[0], messageParts[2], messageParts[3]);
-                        String response = "Received message of type: " + messageType;
+                        String response = "Replicated update of list in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "createHashRing" -> {
                         // Process create hash ring message
                         handleCreateHashRingMessage(messageParts[2]);
-                        String response = "Received message of type: " + messageType;
+                        String response = "Created hash ring in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "addServerToHashRing" -> {
                         // Process add hash ring message
                         handleAddServerToHashRingMessage(id,messageParts[2],messageParts[3],messageParts[4]);
-                        String response = "Received message of type: " + messageType;
+                        String response = "Added server to hash ring in server " + id;
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     case "getKeys" ->{
                         // Process get keys message
                         String keys = handleGetKeysMessage(id,messageParts[0],messageParts[2]);
                         socket.send(keys.getBytes(ZMQ.CHARSET));
+                    }
+                    case "deleteKeys" -> {
+                        handleDeleteKeysMessage(id);
+                        String response = "Keys deleted in server " + id;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
+                    }
+                    case "replicateKeys" -> {
+                        handleReplicateKeysMessage(id);
+                        String response = "Keys replicated in server " + id;
+                        socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                     default -> {
                         System.out.println("Invalid message type.");
@@ -497,6 +507,9 @@ public class Server {
                     byte[] response = socket.recv();
                     String responseMessage = new String(response, ZMQ.CHARSET);
                     System.out.println("Received response from server: " + responseMessage);
+                    if (responseMessage.isEmpty()) {
+                        continue;
+                    }
                     String[] keys = responseMessage.split("/");
                     for (String key : keys) {
                         String[] keyParts = key.split(";");
@@ -533,7 +546,6 @@ public class Server {
         }
 
         // for every server mark to delete the replication level 1 and level 2
-        // and ask for replication of lists of level 0
 
         // go through each virtual node
         for (int i = 1; i <= virtualNodes; i++) {
@@ -553,18 +565,6 @@ public class Server {
                 String[] keyParts = key.split(";");
                 String listUUID = keyParts[0];
                 markListToDelete(id, String.valueOf(i), listUUID);
-            }
-            // ask for replication of lists of level 0
-            keys = handleGetKeysMessage(id, String.valueOf(i), "0");
-            System.out.println("Keys: " + keys);
-            keysArray = keys.split("/");
-            for (String key : keysArray) {
-                String[] keyParts = key.split(";");
-                String listUUID = keyParts[0];
-                System.out.println("List UUID: " + listUUID);
-                String listName = keyParts[1];
-                String listContent = keyParts[2];
-                sendListToReplicationNodes(id,listUUID, listName, listContent);
             }
         }
 
@@ -598,6 +598,72 @@ public class Server {
         }
 
         return keys.toString();
+    }
+
+    private static String getAllKeys(int id,String replicationLevel) {
+        System.out.println("Getting all keys...");
+
+        // get the list name and products and send it to the client
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        StringBuilder keys = new StringBuilder();
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "SELECT list_uuid, list_name, list_content FROM shopping_lists WHERE replicated = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setString(1, replicationLevel);
+                    ResultSet rs = pstmt.executeQuery();
+                    while (rs.next()) {
+                        keys.append(rs.getString("list_uuid")).append(";").append(rs.getString
+                                ("list_name")).append(";").append(rs.getString("list_content")).append("/");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting keys: " + e.getMessage());
+        }
+
+        return keys.toString();
+    }
+
+    private static void handleDeleteKeysMessage(int id) {
+        System.out.println("Deleting keys...");
+
+        // get the list name and products and send it to the client
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "DELETE FROM shopping_lists WHERE to_delete = 1";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error deleting keys: " + e.getMessage());
+        }
+    }
+
+    private static void handleReplicateKeysMessage(int id) {
+        System.out.println("Replicating keys...");
+
+        String keys = getAllKeys(id,"0");
+
+        if (keys.isEmpty()) {
+            return;
+        }
+
+        String[] keysArray = keys.split("/");
+
+        for (String key : keysArray) {
+            String[] keyParts = key.split(";");
+            String listUUID = keyParts[0];
+            String listName = keyParts[1];
+            String listContent = keyParts[2];
+            sendListToReplicationNodes(id, listUUID, listName, listContent);
+        }
+
     }
 
     record Pair<L, R>(L left, R right) {
