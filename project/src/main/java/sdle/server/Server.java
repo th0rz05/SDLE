@@ -297,6 +297,7 @@ public class Server {
                         + "list_name TEXT,"
                         + "list_content TEXT,"
                         + "replicated INTEGER DEFAULT 0,"
+                        + "to_delete INTEGER DEFAULT 0,"
                         + "PRIMARY KEY (virtualnode_id, list_uuid)"
                         + ")";
 
@@ -307,6 +308,26 @@ public class Server {
             }
         } catch (SQLException e) {
             System.out.println("Error creating database: " + e.getMessage());
+        }
+    }
+
+    //mark list as to delete
+    private static void markListToDelete(int id,String virtualNode, String listUUID) {
+        System.out.println("Marking list to delete...");
+
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "UPDATE shopping_lists SET to_delete = 1 WHERE list_uuid = ? AND virtualnode_id = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.setString(2, virtualNode);
+                    pstmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error marking list to delete: " + e.getMessage());
         }
     }
 
@@ -490,6 +511,24 @@ public class Server {
                     }
                 }
 
+            }
+        }
+        else{
+            // go through each virtual node
+            for (int i = 1; i <= virtualNodes; i++) {
+                String node = "S" + id + "V" + i; // "S0V0"
+                System.out.println("Node: " + node);
+                // see if level 0 keys are still responsible for this node
+                String keys = handleGetKeysMessage(id,String.valueOf(i),"0");
+                String [] keysArray = keys.split("/");
+                for (String key : keysArray) {
+                    String[] keyParts = key.split(";");
+                    String listUUID = keyParts[0];
+                    if(!getResponsibleServer(listUUID).equals(node)){
+                        // mark list to delete from database
+                        markListToDelete(id,String.valueOf(i),listUUID);
+                    }
+                }
             }
         }
 

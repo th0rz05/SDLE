@@ -6,7 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add way to add a server to the hash ring">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/client/tiago_shopping.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_1.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_2.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_3.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_4.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_5.db" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
