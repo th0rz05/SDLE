@@ -298,7 +298,7 @@ public class Server {
                         + "list_content TEXT,"
                         + "replicated INTEGER DEFAULT 0,"
                         + "to_delete INTEGER DEFAULT 0,"
-                        + "PRIMARY KEY (virtualnode_id, list_uuid)"
+                        + "PRIMARY KEY (virtualnode_id, list_uuid,to_delete)"
                         + ")";
 
                 try (Statement stmt = conn.createStatement()) {
@@ -529,6 +529,40 @@ public class Server {
                         markListToDelete(id,String.valueOf(i),listUUID);
                     }
                 }
+            }
+        }
+
+        // for every server mark to delete the replication level 1 and level 2
+        // and ask for replication of lists of level 0
+
+        // go through each virtual node
+        for (int i = 1; i <= virtualNodes; i++) {
+            String node = "S" + id + "V" + i; // "S0V0"
+            System.out.println("Node: " + node);
+            // mark to delete the replication level 1 and level 2
+            String keys = handleGetKeysMessage(id, String.valueOf(i), "1");
+            String[] keysArray = keys.split("/");
+            for (String key : keysArray) {
+                String[] keyParts = key.split(";");
+                String listUUID = keyParts[0];
+                markListToDelete(id, String.valueOf(i), listUUID);
+            }
+            keys = handleGetKeysMessage(id, String.valueOf(i), "2");
+            keysArray = keys.split("/");
+            for (String key : keysArray) {
+                String[] keyParts = key.split(";");
+                String listUUID = keyParts[0];
+                markListToDelete(id, String.valueOf(i), listUUID);
+            }
+            // ask for replication of lists of level 0
+            keys = handleGetKeysMessage(id, String.valueOf(i), "0");
+            keysArray = keys.split("/");
+            for (String key : keysArray) {
+                String[] keyParts = key.split(";");
+                String listUUID = keyParts[0];
+                String listName = keyParts[1];
+                String listContent = keyParts[2];
+                sendListToReplicationNodes(id,listUUID, listName, listContent);
             }
         }
 
