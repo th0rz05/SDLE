@@ -105,10 +105,15 @@ public class CRDT {
         }
 
 
-        public void merge(MapPNCounter other) {
-            other.value().forEach((itemName, newCounter) -> {
-                state.merge(itemName, newCounter, PNCounter::merge);
-            });
+        public static MapPNCounter merge(MapPNCounter local ,MapPNCounter remote) {
+            MapPNCounter merged = new MapPNCounter();
+            for (String key : local.value().keySet()) {
+                merged.state.put(key, PNCounter.merge(local.value().getOrDefault(key, new PNCounter()), remote.value().getOrDefault(key, new PNCounter())));
+            }
+            for (String key : remote.value().keySet()) {
+                merged.state.putIfAbsent(key, remote.value().get(key));
+            }
+            return merged;
         }
 
         public String toJson() {
@@ -198,9 +203,6 @@ public class CRDT {
         // Transform json1 to natal3 list
         MapPNCounter natal3 = toMapPNCounter(json1);
 
-
-        // Merge natal and natal2 lists // Merge está a ser feito para ficar na lista natal.
-        natal.merge(natal2);
 
         // Transform natal list to json
         String json3 = natal.toJson();

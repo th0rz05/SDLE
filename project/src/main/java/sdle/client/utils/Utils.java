@@ -6,12 +6,16 @@ import org.zeromq.ZMQ;
 import sdle.client.utils.CRDT.MapPNCounter;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static sdle.client.utils.CRDT.toMapPNCounter;
 
 public class Utils {
 
-    private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:6001";
+    private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:";
+
+    private static final List<Integer> ROUTER_PORTS = new ArrayList<>(List.of(6001, 6002, 6003));
 
     public static void clearConsole() {
         // Print multiple new lines to simulate clearing the console
@@ -103,8 +107,12 @@ public class Utils {
         String listContent = getListProducts(user,shoppingListUUID);
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(ROUTER_ADDRESS);
+            ZMQ.Socket socket = connectRouter(context);
+
+            if(socket == null){
+                System.out.println("Could not connect to router");
+                return;
+            }
 
             Message message = new Message();
 
@@ -125,8 +133,12 @@ public class Utils {
         String listContent = getListProducts(user,shoppingListUUID);
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(ROUTER_ADDRESS);
+            ZMQ.Socket socket = connectRouter(context);
+
+            if(socket == null){
+                System.out.println("Could not connect to router");
+                return;
+            }
 
             Message message = new Message();
 
@@ -260,8 +272,12 @@ public class Utils {
 
     public static boolean updateListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(ROUTER_ADDRESS);
+            ZMQ.Socket socket = connectRouter(context);
+
+            if(socket == null){
+                System.out.println("\nCould not connect to router");
+                return false;
+            }
 
             Message message = new Message();
             message.setMethod("getList");
@@ -284,8 +300,12 @@ public class Utils {
 
     public static boolean getListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(ROUTER_ADDRESS);
+            ZMQ.Socket socket = connectRouter(context);
+
+            if(socket == null){
+                System.out.println("Could not connect to router");
+                return false;
+            }
 
             Message message = new Message();
             message.setMethod("getList");
@@ -347,6 +367,39 @@ public class Utils {
             System.out.println("Error updating Shopping List in the database: " + e.getMessage());
         }
         return false;
+    }
+
+    public static ZMQ.Socket connectRouter(ZContext context) {
+        ZMQ.Socket routerSocket = null;
+        for (int routerPort : ROUTER_PORTS) {
+            routerSocket = context.createSocket(SocketType.REQ);
+            routerSocket.connect("tcp://localhost:" + routerPort);
+            //System.out.println("trying to connect to port " + routerPort + "...");
+
+            routerSocket.setReceiveTimeOut(200);
+
+            sdle.server.utils.Message message = new sdle.server.utils.Message();
+            message.setMethod("hello");
+
+            routerSocket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+            byte[] response = routerSocket.recv();
+
+            if (response == null) {
+                //System.out.println("No response from router on port " + routerPort);
+                routerSocket.close();
+                continue;
+            }
+            String responseMessage = new String(response, ZMQ.CHARSET);
+
+            sdle.server.utils.Message responseMessageObject = sdle.server.utils.Message.fromJson(responseMessage);
+
+            if (responseMessageObject.getMethod().equals("hello")) {
+                //System.out.println("Connected to router on port " + routerPort);
+                return routerSocket;
+            }
+        }
+        return null;
     }
 }
 

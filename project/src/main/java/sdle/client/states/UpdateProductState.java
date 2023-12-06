@@ -47,7 +47,6 @@ public class UpdateProductState implements State {
 
         // Update the product in the list
         if (Utils.updateProductInList(user,listUUID, productName, newQuantity)) {
-            Utils.updateShoppingListInServer(user,listUUID);
             System.out.println("Product updated in the shopping list.");
         } else {
             System.out.println("Failed to update product in the shopping list.");

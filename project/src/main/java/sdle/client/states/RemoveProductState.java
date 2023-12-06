@@ -33,7 +33,6 @@ public class RemoveProductState implements State {
 
         // Remove the product from the list
         if (Utils.removeProductFromList(user,listUUID, productName)) {
-            Utils.updateShoppingListInServer(user,listUUID);
             System.out.println("Product removed from the shopping list.");
         } else {
             System.out.println("Failed to remove product from the shopping list.");

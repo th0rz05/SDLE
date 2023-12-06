@@ -459,10 +459,10 @@ public class Server {
         CRDT.MapPNCounter mapPNCounter2 = toMapPNCounter(listContent);
 
         //merge both maps
-        mapPNCounter.merge(mapPNCounter2);
+        CRDT.MapPNCounter merged = CRDT.MapPNCounter.merge(mapPNCounter, mapPNCounter2);
 
         //transform map into string
-        String listContentMerged = mapPNCounter.toJson();
+        String listContentMerged = merged.toJson();
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {

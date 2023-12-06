@@ -51,7 +51,6 @@ public class AddProductState implements State {
 
         if(productIsZero){
             if (Utils.updateProductInList(user,listUUID, productName, quantity)) {
-                Utils.updateShoppingListInServer(user,listUUID);
                 System.out.println("Product updated in the shopping list.");
             } else {
                 System.out.println("Failed to update product in the shopping list.");
@@ -61,7 +60,6 @@ public class AddProductState implements State {
         else {
             // Save the product to the list
             if (Utils.addProductToList(user, listUUID, productName, quantity)) {
-                Utils.updateShoppingListInServer(user, listUUID);
                 System.out.println("Product added to the shopping list.");
             } else {
                 System.out.println("Failed to add product to the shopping list.");

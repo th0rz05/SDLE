@@ -11,13 +11,13 @@ Open the terminal in the project folder and run:
 To run the router:
 
 ```bash
-java -jar build/libs/router.jar
+java -jar build/libs/router.jar <id> 
 ```
 
 Then to run the server:
 
 ```bash
-java -jar build/libs/server.jar <id>
+java -jar build/libs/server.jar <id> [JoinHashRing]
 ```
 
 And to run the client:
