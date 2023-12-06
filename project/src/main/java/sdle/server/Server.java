@@ -11,6 +11,10 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import sdle.router.Router;
+import sdle.server.utils.CRDT;
+import sdle.server.utils.Message;
+
+import static sdle.server.utils.CRDT.toMapPNCounter;
 
 public class Server {
 
@@ -44,98 +48,88 @@ public class Server {
             ZMQ.Socket routerSocket = context.createSocket(SocketType.REQ);
             routerSocket.connect("tcp://localhost:6000"); // Connect to the router
 
-            if (joinHashRing) {
-                // Send a message to the router indicating participation in the hash ring
-                String message = "JoinHashRing;" + id;
-                routerSocket.send(message.getBytes(ZMQ.CHARSET));
-            }
-
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
             socket.bind("tcp://*:" + port);
 
-
             System.out.println("Server listening on port " + port + "...");
+            System.out.println("Press Ctrl+C to exit.");
 
-            // Create the database
             createDatabase(id);
 
             // call a function when ctrl+c is pressed
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("Shutting down...");
-                // Send a message to the router indicating leaving the hash ring
-                // String message = "LeaveHashRing;" + id;
-                // routerSocket.send(message.getBytes(ZMQ.CHARSET));
             }));
+
+            if (joinHashRing) {
+                // Send a message to the router indicating participation in the hash ring
+                Message message = new Message();
+                message.setMethod("joinHashRing");
+                message.setServerId(String.valueOf(id));
+
+                routerSocket.send(message.toJson().getBytes(ZMQ.CHARSET));
+            }
+            else{
+                Message message = new Message();
+                message.setMethod("createHashRing");
+
+                routerSocket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+                // Wait for the response from the router
+                byte[] response = routerSocket.recv();
+                String responseMessage = new String(response, ZMQ.CHARSET);
+
+                message = Message.fromJson(responseMessage);
+                handleCreateHashRingMessage(message);
+
+            }
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] request = socket.recv();
-                String[] messageParts = new String(request, ZMQ.CHARSET).split(";");
+                String receivedMessage = new String(request, ZMQ.CHARSET);
 
-                String messageType = messageParts[1];
+                Message message = Message.fromJson(receivedMessage);
 
-                switch (messageType) {
+                switch (message.getMethod()) {
                     case "createList" -> {
-                        // Process create list message
-                        handleCreateListMessage(id, messageParts[0], messageParts[2], messageParts[3]);
-                        sendListToReplicationNodes(id,messageParts[2], messageParts[3],"[]");
-                        String response = "Created list in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle create list message
+                        new Thread(() -> handleCreateListMessage(id,message,socket)).start();
                     }
                     case "updateList" -> {
-                        // Process update list message
-                        handleUpdateListMessage(id,messageParts[0], messageParts[2], messageParts[3]);
-                        updateListToReplicationNodes(id,messageParts[2], messageParts[3]);
-                        String response = "Updated list in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle update list message
+                        new Thread(() -> handleUpdateListMessage(id,message,socket)).start();
                     }
                     case "getList" -> {
-                        // Process get list message
-                        String list = handleGetListMessage(id,messageParts[0],messageParts[2]);
-                        socket.send(list.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle get list message
+                        new Thread(() -> handleGetListMessage(id, message, socket)).start();
                     }
                     case "replicateCreationList" -> {
-                        // Process replicate list message
-                        handleReplicateCreationListMessage(id, messageParts[0], messageParts[2], messageParts[3],
-                                messageParts[4],messageParts[5]);
-                        String response = "Replicated creation of list in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle replicate creation list message
+                        new Thread(() -> handleReplicateCreationListMessage(id,message,socket)).start();
                     }
                     case "replicateUpdateList" -> {
-                        // Process replicate list message
-                        handleReplicateUpdateListMessage(id, messageParts[0], messageParts[2], messageParts[3]);
-                        String response = "Replicated update of list in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
-                    }
-                    case "createHashRing" -> {
-                        // Process create hash ring message
-                        handleCreateHashRingMessage(messageParts[2]);
-                        String response = "Created hash ring in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle replicate update list message
+                        new Thread(() -> handleReplicateUpdateListMessage(id,message,socket)).start();
                     }
                     case "addServerToHashRing" -> {
-                        // Process add hash ring message
-                        handleAddServerToHashRingMessage(id,messageParts[2],messageParts[3],messageParts[4]);
-                        String response = "Added server to hash ring in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle add server to hash ring message
+                        new Thread(() -> handleAddServerToHashRingMessage(id,message,socket)).start();
                     }
                     case "getKeys" ->{
-                        // Process get keys message
-                        String keys = handleGetKeysMessage(id,messageParts[0],messageParts[2]);
-                        socket.send(keys.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle get keys message
+                        new Thread(() -> handleGetKeysMessage(id,message,socket)).start();
                     }
                     case "deleteKeys" -> {
-                        handleDeleteKeysMessage(id);
-                        String response = "Keys deleted in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle delete keys message
+                        new Thread(() -> handleDeleteKeysMessage(id,socket)).start();
                     }
                     case "replicateKeys" -> {
-                        handleReplicateKeysMessage(id);
-                        String response = "Keys replicated in server " + id;
-                        socket.send(response.getBytes(ZMQ.CHARSET));
+                        // Call thread to handle replicate keys message
+                        new Thread(() -> handleReplicateKeysMessage(id,socket)).start();
                     }
                     default -> {
                         System.out.println("Invalid message type.");
-                        String response = "Received message of type: " + messageType;
+                        String response = "Received message of type: ";
                         socket.send(response.getBytes(ZMQ.CHARSET));
                     }
                 }
@@ -148,11 +142,15 @@ public class Server {
 
         System.out.println("Nodes for replication: " + nodes);
 
-        String request = "replicateUpdateList;" + listUUID + ";" + listContent;
+        Message message = new Message();
+        message.setMethod("replicateUpdateList");
+        message.setListUUID(listUUID);
+        message.setListcontent(listContent);
 
         String[] nodesArray = nodes.split(";");
 
         for (String node : nodesArray) {
+
             int port = Integer.parseInt(node.substring(1,2)) + SERVER_BASE_PORT;
 
             System.out.println("Port: " + port);
@@ -160,19 +158,19 @@ public class Server {
             String virtualNode = node.substring(3);
 
             if(port == 5000 + id) {
-                System.out.println("Same server, updating in database...");
-                handleReplicateUpdateListMessage(id, virtualNode, listUUID, listContent);
+                System.out.println("Same server, storing in database...");
+                replicateUpdateList(id, virtualNode, listUUID, listContent);
                 continue;
             }
 
-            String modifiedRequest = virtualNode + ";" + request;
+            message.setVirtualnode(virtualNode);
 
             try (ZContext context = new ZContext()) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 socket.connect("tcp://localhost:" + port);
                 System.out.println("connected to port " + port + "...");
-                socket.send(modifiedRequest);
-                System.out.println("Sent request to server: " + modifiedRequest);
+                socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+                System.out.println("Sent request to server: " + message.toJson());
                 byte[] response = socket.recv();
                 String responseMessage = new String(response, ZMQ.CHARSET);
                 System.out.println("Received response from server: " + responseMessage);
@@ -186,7 +184,11 @@ public class Server {
 
         System.out.println("Nodes for replication: " + nodes);
 
-        String request = "replicateCreationList;" + listUUID + ";" + listName + ";" + listContent;
+        Message message = new Message();
+        message.setMethod("replicateCreationList");
+        message.setListUUID(listUUID);
+        message.setListname(listName);
+        message.setListcontent(listContent);
 
         String[] nodesArray = nodes.split(";");
 
@@ -202,27 +204,26 @@ public class Server {
 
             if(port == 5000 + id) {
                 System.out.println("Same server, storing in database...");
-                handleReplicateCreationListMessage(id, virtualNode, listUUID, listName, listContent,
+                replicateCreationList(id, virtualNode, listUUID, listName, listContent,
                         String.valueOf(replicationLevel));
                 continue;
             }
 
-            String modifiedRequest = virtualNode + ";" + request + ";" + replicationLevel;
+            message.setVirtualnode(virtualNode);
+            message.setReplicationLevel(String.valueOf(replicationLevel));
 
             try (ZContext context = new ZContext()) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 socket.connect("tcp://localhost:" + port);
                 System.out.println("connected to port " + port + "...");
-                socket.send(modifiedRequest);
-                System.out.println("Sent request to server: " + modifiedRequest);
+                socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+                System.out.println("Sent request to server: " + message.toJson());
                 byte[] response = socket.recv();
                 String responseMessage = new String(response, ZMQ.CHARSET);
                 System.out.println("Received response from server: " + responseMessage);
             }
-
             replicationLevel++;
         }
-
     }
 
     private static int getSHA256Hash(String input) {
@@ -341,7 +342,19 @@ public class Server {
         }
     }
 
-    private static void handleCreateListMessage(int id, String virtualNode, String listUUID, String listName) {
+    private static void handleCreateListMessage(int id,Message message, ZMQ.Socket socket) {
+        //create list in database
+        createList(id, message.getVirtualnode(), message.getListUUID(), message.getListname(),message.getListcontent());
+
+        //send response to client
+        String response = "Created list in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+
+        sendListToReplicationNodes(id,message.getListUUID(), message.getListname(), message.getListcontent());
+    }
+
+    private static void createList(int id, String virtualNode, String listUUID, String listName,String listContent) {
         System.out.println("Creating list...");
 
         String url = "jdbc:sqlite:database/server/server_" + id + ".db";
@@ -353,29 +366,51 @@ public class Server {
                     pstmt.setString(1, virtualNode);
                     pstmt.setString(2, listUUID);
                     pstmt.setString(3, listName);
-                    pstmt.setString(4, "[]");
+                    pstmt.setString(4, listContent);
                     pstmt.executeUpdate();
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error creating list: " + e.getMessage());
         }
-
-        // print the message
-        System.out.println("Received message: " + String.join(";", listUUID, listName));
-
     }
 
-    private static void handleUpdateListMessage(int id,String virtualNode, String listUUID, String listContent) {
+    private static void handleUpdateListMessage(int id,Message message, ZMQ.Socket socket) {
+        //update list in database
+        updateList(id, message.getVirtualnode(), message.getListUUID(), message.getListcontent());
+
+        //send response to client
+        String response = "Updated list in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+
+       updateListToReplicationNodes(id,message.getListUUID(), message.getListcontent());
+    }
+
+    private static void updateList(int id,String virtualNode, String listUUID, String listContent) {
         System.out.println("Updating list...");
 
         String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        String listContentDatabase = getListContent(id,virtualNode,listUUID);
+
+        //transform listCOntent into map pncounter
+        CRDT.MapPNCounter mapPNCounter = toMapPNCounter(listContentDatabase);
+
+        //transform listContent into map pncounter
+        CRDT.MapPNCounter mapPNCounter2 = toMapPNCounter(listContent);
+
+        //merge both maps
+        mapPNCounter.merge(mapPNCounter2);
+
+        //transform map into string
+        String listContentMerged = mapPNCounter.toJson();
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ? AND virtualnode_id = ?";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                    pstmt.setString(1, listContent);
+                    pstmt.setString(1, listContentMerged);
                     pstmt.setString(2, listUUID);
                     pstmt.setString(3, virtualNode);
                     pstmt.executeUpdate();
@@ -390,7 +425,15 @@ public class Server {
 
     }
 
-    private static String handleGetListMessage(int id,String virtualNode, String listUUID) {
+    private static void handleGetListMessage(int id,Message message, ZMQ.Socket socket) {
+        //get list from database
+        Message response = getList(id,message.getVirtualnode(), message.getListUUID());
+
+        //send response to client
+        socket.send(response.toJson().getBytes(ZMQ.CHARSET));
+    }
+
+    private static Message getList(int id,String virtualNode, String listUUID) {
         System.out.println("Getting list...");
 
         // get the list name and products and send it to the client
@@ -415,10 +458,26 @@ public class Server {
             System.out.println("Error getting list: " + e.getMessage());
         }
 
-        return String.join(";", listUUID, listName, listContent);
+        Message message = new Message();
+        message.setListUUID(listUUID);
+        message.setListname(listName);
+        message.setListcontent(listContent);
+
+        return message;
     }
 
-    private static void handleReplicateCreationListMessage(int id, String virtualNode, String listUUID, String listName,
+    private static void handleReplicateCreationListMessage(int id,Message message,ZMQ.Socket socket) {
+
+        replicateCreationList(id, message.getVirtualnode(), message.getListUUID(), message.getListname(),
+                message.getListcontent(),message.getReplicationLevel());
+
+        //send response to client
+        String response = "Replicated creation of list in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    private static void replicateCreationList(int id, String virtualNode, String listUUID, String listName,
                                                            String listContent, String replicationLevel) {
         System.out.println("Replicating creation of list...");
 
@@ -440,16 +499,21 @@ public class Server {
         } catch (SQLException e) {
             System.out.println("Error replicating list: " + e.getMessage());
         }
-
-        // print the message
-        System.out.println("Received message: " + String.join(";", listUUID, listName, listContent));
-
     }
 
-    private static void handleReplicateUpdateListMessage(int id, String virtualNode, String listUUID, String listContent) {
+    private static void handleReplicateUpdateListMessage(int id,Message message,ZMQ.Socket socket) {
+
+        replicateUpdateList(id, message.getVirtualnode(), message.getListUUID(), message.getListcontent());
+
+        //send response to client
+        String response = "Replicated update of list in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    private static void replicateUpdateList(int id, String virtualNode, String listUUID, String listContent) {
         System.out.println("Replicating update of list...");
 
-        //store in database with virtualnode_id set to null and list_content set to an empty JSON object
         String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
@@ -465,20 +529,31 @@ public class Server {
         } catch (SQLException e) {
             System.out.println("Error replicating list: " + e.getMessage());
         }
-
-        // print the message
-        System.out.println("Received message: " + String.join(";", listUUID, listContent));
-
     }
 
-    private static void handleCreateHashRingMessage(String hashRingString) {
-        System.out.println("Creating hash ring...");
+    private static void handleCreateHashRingMessage(Message message) {
+        createHashRing(message.getHashRing());
+    }
+
+    private static void createHashRing(String hashRingString) {
 
         hashRing = getHashRing(hashRingString.split(":"));
 
+        System.out.println("Hash ring created.");
+
     }
 
-    private static void handleAddServerToHashRingMessage(int id,String hashRingString,String newServerId,
+    private static void handleAddServerToHashRingMessage(int id,Message message,ZMQ.Socket socket) {
+        addServerToHashRing(id,message.getHashRing(),message.getServerId(),
+                message.getNrVirtualNodes());
+
+        //send response to client
+        String response = "Added server to hash ring in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    private static void addServerToHashRing(int id,String hashRingString,String newServerId,
                                                          String virtualNodesPerServer) {
         System.out.println("Updating hash ring...");
 
@@ -494,22 +569,31 @@ public class Server {
                 System.out.println("Node: " + node);
                 String nextNode = getNextNode(node);
                 System.out.println("Next node: " + nextNode);
+
                 // connect to the next node
                 int port = Integer.parseInt(nextNode.substring(1,2)) + SERVER_BASE_PORT;
                 int virtualNode = Integer.parseInt(nextNode.substring(3));
+
                 try (ZContext context = new ZContext()) {
                     ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                     socket.connect("tcp://localhost:" + port);
                     System.out.println("connected to port " + port + "...");
-                    String request = virtualNode + ";getKeys;0"; // "0" is the replication level
-                    socket.send(request.getBytes(ZMQ.CHARSET));
-                    System.out.println("Sent request to server: " + request);
+
+                    Message message = new Message();
+                    message.setMethod("getKeys");
+                    message.setVirtualnode(String.valueOf(virtualNode));
+                    message.setReplicationLevel("0");
+                    socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+                    System.out.println("Sent request to server: " + message.toJson());
+
                     byte[] response = socket.recv();
                     String responseMessage = new String(response, ZMQ.CHARSET);
                     System.out.println("Received response from server: " + responseMessage);
+
                     if (responseMessage.isEmpty()) {
                         continue;
                     }
+
                     String[] keys = responseMessage.split("/");
                     for (String key : keys) {
                         String[] keyParts = key.split(";");
@@ -518,8 +602,7 @@ public class Server {
                         String listContent = keyParts[2];
                         if(getResponsibleServer(listUUID).equals(node)){
                             System.out.println("Storing list in database...");
-                            handleCreateListMessage(id, String.valueOf(virtualNode), listUUID, listName);
-                            handleUpdateListMessage(id, String.valueOf(virtualNode), listUUID, listContent);
+                            createList(id, String.valueOf(virtualNode), listUUID, listName, listContent);
                         }
                     }
                 }
@@ -532,13 +615,12 @@ public class Server {
                 String node = "S" + id + "V" + i; // "S0V0"
                 System.out.println("Node: " + node);
                 // see if level 0 keys are still responsible for this node
-                String keys = handleGetKeysMessage(id,String.valueOf(i),"0");
+                String keys = getKeys(id,String.valueOf(i),"0");
                 String [] keysArray = keys.split("/");
                 for (String key : keysArray) {
                     String[] keyParts = key.split(";");
                     String listUUID = keyParts[0];
                     if(!getResponsibleServer(listUUID).equals(node)){
-                        // mark list to delete from database
                         markListToDelete(id,String.valueOf(i),listUUID);
                     }
                 }
@@ -552,14 +634,14 @@ public class Server {
             String node = "S" + id + "V" + i; // "S0V0"
             System.out.println("Node: " + node);
             // mark to delete the replication level 1 and level 2
-            String keys = handleGetKeysMessage(id, String.valueOf(i), "1");
+            String keys = getKeys(id, String.valueOf(i), "1");
             String[] keysArray = keys.split("/");
             for (String key : keysArray) {
                 String[] keyParts = key.split(";");
                 String listUUID = keyParts[0];
                 markListToDelete(id, String.valueOf(i), listUUID);
             }
-            keys = handleGetKeysMessage(id, String.valueOf(i), "2");
+            keys = getKeys(id, String.valueOf(i), "2");
             keysArray = keys.split("/");
             for (String key : keysArray) {
                 String[] keyParts = key.split(";");
@@ -571,7 +653,12 @@ public class Server {
         System.out.println("Hash ring updated.");
     }
 
-    private static String handleGetKeysMessage(int id,String virtualNode,String replicationLevel) {
+    private static void handleGetKeysMessage(int id,Message message,ZMQ.Socket socket) {
+        String keys = getKeys(id,message.getVirtualnode(),message.getReplicationLevel());
+        socket.send(keys.getBytes(ZMQ.CHARSET));
+    }
+
+    private static String getKeys(int id,String virtualNode,String replicationLevel) {
         System.out.println("Getting keys...");
 
         // get the list name and products and send it to the client
@@ -596,7 +683,6 @@ public class Server {
         } catch (SQLException e) {
             System.out.println("Error getting keys: " + e.getMessage());
         }
-
         return keys.toString();
     }
 
@@ -627,7 +713,13 @@ public class Server {
         return keys.toString();
     }
 
-    private static void handleDeleteKeysMessage(int id) {
+    private static void handleDeleteKeysMessage(int id,ZMQ.Socket socket) {
+        deleteKeys(id);
+        String response = "Keys deleted in server " + id;
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    private static void deleteKeys(int id) {
         System.out.println("Deleting keys...");
 
         // get the list name and products and send it to the client
@@ -645,7 +737,13 @@ public class Server {
         }
     }
 
-    private static void handleReplicateKeysMessage(int id) {
+    private static void handleReplicateKeysMessage(int id,ZMQ.Socket socket) {
+        replicateKeys(id);
+        String response = "Keys replicated in server " + id;
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    private static void replicateKeys(int id) {
         System.out.println("Replicating keys...");
 
         String keys = getAllKeys(id,"0");
@@ -663,7 +761,32 @@ public class Server {
             String listContent = keyParts[2];
             sendListToReplicationNodes(id, listUUID, listName, listContent);
         }
+    }
 
+    private static String getListContent(int id,String virtualNode, String listUUID) {
+        System.out.println("Getting list content...");
+
+        // get the list name and products and send it to the client
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+        String listContent = null;
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "SELECT list_content FROM shopping_lists WHERE list_uuid = ? AND virtualnode_id = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.setString(2, virtualNode);
+                    ResultSet rs = pstmt.executeQuery();
+                    if (rs.next()) {
+                        listContent = rs.getString("list_content");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting list content: " + e.getMessage());
+        }
+
+        return listContent;
     }
 
     record Pair<L, R>(L left, R right) {

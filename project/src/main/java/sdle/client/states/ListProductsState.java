@@ -30,7 +30,7 @@ public class ListProductsState implements State {
             String listName = scanner.nextLine().trim();
 
             // See if the shopping list exists
-            if (!shoppingListExists(listName)) {
+            if (!Utils.shoppingListExists(user,listName)) {
                 System.out.println("Shopping list does not exist.");
                 System.out.println("Press enter to continue...");
                 scanner.nextLine();
@@ -41,7 +41,7 @@ public class ListProductsState implements State {
             listUUID = getListUUID(listName);
         }
 
-        Utils.getListFromServer(user,listUUID);
+        Utils.updateListFromServer(user,listUUID);
 
         // Display products in the specified list
         Utils.displayListProducts(user,listUUID);
@@ -67,6 +67,10 @@ public class ListProductsState implements State {
                 case "4" -> {
                     Utils.clearConsole();
                     return new DeleteListState(user,listUUID);
+                }
+                case "5" -> {
+                    Utils.clearConsole();
+                    return new ListProductsState(user,listUUID);
                 }
                 case "q" -> {
                     Utils.clearConsole();
@@ -109,27 +113,9 @@ public class ListProductsState implements State {
         System.out.println("2 - Remove products");
         System.out.println("3 - Update products");
         System.out.println("4 - Delete shopping list");
+        System.out.println("5 - Sync shopping list");
         System.out.println("Enter 'Q' to return to the main menu");
         System.out.print("Your choice: ");
     }
 
-    private boolean shoppingListExists(String shoppingListName) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
-
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "SELECT * FROM shopping_lists WHERE list_name = ?";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, shoppingListName);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        return rs.next();
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking if Shopping List exists: " + e.getMessage());
-        }
-        return false;
-    }
 }

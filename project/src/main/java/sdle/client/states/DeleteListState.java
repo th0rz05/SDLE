@@ -80,26 +80,19 @@ public class DeleteListState implements State {
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String deleteProductsSql = "DELETE FROM list_products WHERE list_uuid = ?";
-                String deleteListSql = "DELETE FROM shopping_lists WHERE list_uuid = ?";
+                String sql = "DELETE FROM shopping_lists WHERE list_uuid = ?";
 
-                // Delete products associated with the list
-                try (PreparedStatement pstmtProducts = connection.prepareStatement(deleteProductsSql)) {
-                    pstmtProducts.setString(1, listUUID);
-                    pstmtProducts.executeUpdate();
-                }
-
-                // Delete the list
-                try (PreparedStatement pstmtList = connection.prepareStatement(deleteListSql)) {
-                    pstmtList.setString(1, listUUID);
-                    int rowsAffected = pstmtList.executeUpdate();
-                    return rowsAffected > 0;
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, listUUID);
+                    pstmt.executeUpdate();
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error deleting shopping list: " + e.getMessage());
+            return false;
         }
-        return false;
+
+        return true;
     }
 }
 

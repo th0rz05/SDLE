@@ -3,6 +3,7 @@ package sdle.router;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import sdle.router.utils.Message;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -81,52 +82,82 @@ public class Router {
 
             System.out.println("Router is running on port " + ROUTER_PORT);
 
-            ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
-
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] request = routerSocket.recv();
                 String receivedMessage = new String(request, ZMQ.CHARSET);
                 System.out.println("Received message from client: " + receivedMessage);
 
-                String[] messageParts = receivedMessage.split(";");
+                Message message = Message.fromJson(receivedMessage);
 
-                if(messageParts[0].equals("JoinHashRing")){
-                    addServerToHashRing(messageParts[1]);
-                    sendHashRingToServers("addServerToHashRing",Integer.parseInt(messageParts[1]),
-                            virtualNodesPerServer);
-                    continue;
+                switch (message.getMethod()) {
+                    case "createHashRing" -> {
+                        // ask a thread to send the hash ring to the server
+                        new Thread(() -> sendHashRingToServer(routerSocket)).start();
+                    }
+                    case "joinHashRing" -> {
+                        // ask a thread to add the server to the hash ring
+                        new Thread(() -> handleJoinHashRing(message)).start();
+                    }
+                    default -> {
+                        //ask a thread to reroute the message
+                        new Thread(() -> rerouteMessage(message,routerSocket)).start();
+                    }
                 }
-
-                // Split the received message into parts
-                String listUUID = messageParts[1];
-
-                String responsibleServer = getResponsibleServer(listUUID);
-
-                System.out.println("Responsible server: " + responsibleServer);
-
-                String virtualNode = responsibleServer.substring(3);
-
-                String modifiedMessage = virtualNode + ";" + receivedMessage;
-
-                System.out.println("Sending message to server: " + modifiedMessage);
-
-                int serverPort = Integer.parseInt(responsibleServer.substring(1,2)) + SERVER_BASE_PORT;
-
-                serverSocket.connect("tcp://localhost:" + serverPort);
-
-                serverSocket.send(modifiedMessage.getBytes(ZMQ.CHARSET));
-
-                byte[] response = serverSocket.recv();
-
-                String responseMessage = new String(response, ZMQ.CHARSET);
-
-                System.out.println("Received response from server: " + responseMessage);
-
-                routerSocket.send(responseMessage.getBytes(ZMQ.CHARSET));
-
-                serverSocket.disconnect("tcp://localhost:" + serverPort);
             }
+
         }
+    }
+
+    private void rerouteMessage(Message message, ZMQ.Socket routerSocket) {
+        String responsibleServer = getResponsibleServer(message.getListUUID());
+        System.out.println("Responsible server: " + responsibleServer);
+
+        String virtualNode = responsibleServer.substring(3);
+        message.setVirtualnode(virtualNode);
+
+        int serverPort = Integer.parseInt(responsibleServer.substring(1, 2)) + SERVER_BASE_PORT;
+
+        //create a socket to send the message to the server
+        try (ZContext context = new ZContext()) {
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect("tcp://localhost:" + serverPort);
+
+            String messageToSend = message.toJson();
+
+            System.out.println("Sending message to server: " + messageToSend);
+
+            socket.send(messageToSend.getBytes(ZMQ.CHARSET));
+
+            byte[] response = socket.recv();
+
+            String responseMessage = new String(response, ZMQ.CHARSET);
+
+            System.out.println("Received response from server: " + responseMessage);
+
+            socket.disconnect("tcp://localhost:" + serverPort);
+
+            routerSocket.send(responseMessage.getBytes(ZMQ.CHARSET));
+        }
+    }
+
+    private void handleJoinHashRing(Message message) {
+        //sleep for 1 second
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        addServerToHashRing(message.getServerId());
+        sendHashRingToServers(Integer.parseInt(message.getServerId()), virtualNodesPerServer);
+    }
+
+    private void sendHashRingToServer(ZMQ.Socket routerSocket) {
+        Message responseMessage = new Message();
+        responseMessage.setMethod("createHashRing");
+        responseMessage.setHashRing(getHashRingAsString());
+        System.out.println("Sending message to client: " + responseMessage.toJson());
+
+        routerSocket.send(responseMessage.toJson().getBytes(ZMQ.CHARSET));
     }
 
     public void addServerToHashRing(String serverId){
@@ -148,7 +179,7 @@ public class Router {
         return sb.toString();
     }
 
-    public void sendHashRingToServers(String method,int newServerId,int numberOfVirtualNodes) {
+    public void sendHashRingToServers(int newServerId,int numberOfVirtualNodes) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
 
@@ -156,15 +187,15 @@ public class Router {
                 int serverPort = serverId + SERVER_BASE_PORT;
                 socket.connect("tcp://localhost:" + serverPort);
 
-                String message = "null;" + method + ";" + getHashRingAsString();
+                Message message = new Message();
+                message.setMethod("addServerToHashRing");
+                message.setHashRing(getHashRingAsString());
+                message.setServerId(String.valueOf(newServerId));
+                message.setNrVirtualNodes(String.valueOf(numberOfVirtualNodes));
 
-                if(method.equals("addServerToHashRing")){
-                    message+= ";" + newServerId + ";" + numberOfVirtualNodes;
-                }
+                System.out.println("Sending message to server: " + message.toJson());
 
-                System.out.println("Sending message to server: " + message);
-
-                socket.send(message.getBytes(ZMQ.CHARSET));
+                socket.send(message.toJson().getBytes(ZMQ.CHARSET));
 
                 byte[] response = socket.recv();
 
@@ -173,11 +204,6 @@ public class Router {
                 System.out.println("Received response from server: " + responseMessage);
 
                 socket.disconnect("tcp://localhost:" + serverPort);
-
-            }
-
-            if(method.equals("createHashRing")){
-                return;
             }
 
             //for every server send deleteKeys message
@@ -185,11 +211,12 @@ public class Router {
                 int serverPort = serverId + SERVER_BASE_PORT;
                 socket.connect("tcp://localhost:" + serverPort);
 
-                String message = "null;deleteKeys";
+                Message message = new Message();
+                message.setMethod("deleteKeys");
 
                 System.out.println("Sending message to server: " + message);
 
-                socket.send(message.getBytes(ZMQ.CHARSET));
+                socket.send(message.toJson().getBytes(ZMQ.CHARSET));
 
                 byte[] response = socket.recv();
 
@@ -206,11 +233,12 @@ public class Router {
                 int serverPort = serverId + SERVER_BASE_PORT;
                 socket.connect("tcp://localhost:" + serverPort);
 
-                String message = "null;replicateKeys";
+                Message message = new Message();
+                message.setMethod("replicateKeys");
 
                 System.out.println("Sending message to server: " + message);
 
-                socket.send(message.getBytes(ZMQ.CHARSET));
+                socket.send(message.toJson().getBytes(ZMQ.CHARSET));
 
                 byte[] response = socket.recv();
 
@@ -221,7 +249,6 @@ public class Router {
                 socket.disconnect("tcp://localhost:" + serverPort);
 
             }
-
             System.out.println("Hash ring sent to all servers");
         }
     }
@@ -232,7 +259,6 @@ public class Router {
         int virtualNodesPerServer = 3; // Change this to the desired number of virtual nodes per server
 
         Router router = new Router(numberOfServers, virtualNodesPerServer);
-        router.sendHashRingToServers("createHashRing",0,0);
         router.startRouter();
     }
 

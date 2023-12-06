@@ -22,7 +22,8 @@ public class RemoveProductState implements State {
         String productName = scanner.nextLine().trim();
 
         // See if the product exists in the list
-        if (!Utils.productExistsInList(user,listUUID, productName)) {
+        if (!Utils.productExistsInList(user,listUUID, productName) ||
+                Utils.productCounterIsZero(user,listUUID,productName)) {
             System.out.println("Product does not exist in the shopping list.");
             System.out.println("Press enter to continue...");
             scanner.nextLine();

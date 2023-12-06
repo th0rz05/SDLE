@@ -4,12 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="add way to add a server to the hash ring">
+    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="adding server to the hash ring now working">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_1.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_2.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_3.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_4.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
     </list>
@@ -59,30 +70,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/tiagobarbosa05/Documents/University/SDLE/project/src/main/java/sdle/router",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="sdle.states" />
     </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/sdle/router" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="sdle.server.utils" />
+    </key>
   </component>
-  <component name="RunManager" selected="Gradle.project [clean serverJar]">
+  <component name="RunManager" selected="Application.CRDT">
+    <configuration name="CRDT" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sdle.client.utils.CRDT" />
+      <module name="project.main" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="sdle.client.utils.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="sdle.client.Client" />
       <module name="project.main" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="sdle.client.*" />
+          <option name="PATTERN" value="sdle.client.utils.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -103,29 +134,6 @@
           <list>
             <option value="clean" />
             <option value="clientJar" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>false</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="project [clean serverJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value="clean" />
-            <option value="serverJar" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -182,11 +190,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.CRDT" />
         <item itemvalue="Gradle.project [clientJar]" />
         <item itemvalue="Gradle.project [serverJar]" />
         <item itemvalue="Gradle.project [clean clientJar]" />
         <item itemvalue="Application.Client" />
-        <item itemvalue="Gradle.project [clean serverJar]" />
       </list>
     </recent_temporary>
   </component>
@@ -221,7 +229,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701719837950</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="adding server to the hash ring now working">
+      <option name="closed" value="true" />
+      <created>1701742605740</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1701742605740</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -239,6 +255,7 @@
     <MESSAGE value="add error control" />
     <MESSAGE value="add users for the local side and started a server that listens to usernames" />
     <MESSAGE value="add way to add a server to the hash ring" />
-    <option name="LAST_COMMIT_MESSAGE" value="add way to add a server to the hash ring" />
+    <MESSAGE value="adding server to the hash ring now working" />
+    <option name="LAST_COMMIT_MESSAGE" value="adding server to the hash ring now working" />
   </component>
 </project>

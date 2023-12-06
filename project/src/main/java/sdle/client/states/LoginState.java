@@ -10,10 +10,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Scanner;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
-import org.zeromq.ZContext;
-
 public class LoginState implements State {
     private final Scanner scanner = new Scanner(System.in);
 
@@ -48,21 +44,12 @@ public class LoginState implements State {
                 if (!dbFile.exists()) {
                     String createListsTable = "CREATE TABLE IF NOT EXISTS shopping_lists ("
                             + "list_uuid TEXT PRIMARY KEY,"
-                            + "list_name TEXT UNIQUE NOT NULL"
+                            + "list_name TEXT UNIQUE NOT NULL,"
+                            + "list_content TEXT NOT NULL"
                             + ");";
-
-                    String createProductsTable = "CREATE TABLE IF NOT EXISTS list_products ("
-                            + "list_uuid TEXT NOT NULL,"
-                            + "product_name TEXT NOT NULL,"
-                            + "quantity INTEGER NOT NULL,"
-                            + "PRIMARY KEY (list_uuid, product_name),"
-                            + "FOREIGN KEY (list_uuid) REFERENCES shopping_lists(list_uuid)"
-                            + ");";
-
 
                     try (Statement stmt = conn.createStatement()) {
                         stmt.execute(createListsTable);
-                        stmt.execute(createProductsTable);
                     }
                 }
                 return true;

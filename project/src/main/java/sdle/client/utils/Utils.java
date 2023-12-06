@@ -1,19 +1,15 @@
 package sdle.client.utils;
 
-import com.google.gson.Gson;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import sdle.client.Product;
+import sdle.client.utils.CRDT.MapPNCounter;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
+import static sdle.client.utils.CRDT.toMapPNCounter;
 
 public class Utils {
-
-    private static final Gson gson = new Gson();
 
     private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:6000";
 
@@ -26,56 +22,61 @@ public class Utils {
 
     // Get the products of a shopping list from the database
     public static void displayListProducts(String user, String listUUID) {
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
+
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
+
+        //print fancy table header
+        System.out.println("-----------------------------------------------------");
+        System.out.println("|                       " +  getListName(user,listUUID) + "                       |");
+        System.out.println("-----------------------------------------------------");
+
+        // display the products
+        mapPNCounter.display();
+    }
+
+    public static String getListName(String user, String listUUID) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "SELECT product_name, quantity FROM list_products WHERE list_uuid = ?";
+                String sql = "SELECT list_name FROM shopping_lists WHERE list_uuid = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                     pstmt.setString(1, listUUID);
                     ResultSet rs = pstmt.executeQuery();
 
-                    System.out.println("------ Products ------");
-                    while (rs.next()) {
-                        String productName = rs.getString("product_name");
-                        int productQuantity = rs.getInt("quantity");
-                        System.out.println("Name: " + productName + " | Quantity: " + productQuantity);
-                    }
+                    return rs.getString("list_name");
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error fetching Products: " + e.getMessage());
         }
+        System.out.println("Error fetching Products: " + listUUID);
+        return null;
     }
 
     public static String getListProducts(String user, String listUUID) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        List<Product> products = new ArrayList<Product>();
-
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "SELECT product_name, quantity FROM list_products WHERE list_uuid = ?";
+                String sql = "SELECT list_content FROM shopping_lists WHERE list_uuid = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                     pstmt.setString(1, listUUID);
                     ResultSet rs = pstmt.executeQuery();
 
-                    System.out.println("------ Products ------");
-                    while (rs.next()) {
-                        String productName = rs.getString("product_name");
-                        int productQuantity = rs.getInt("quantity");
-                        Product product = new Product(productName, productQuantity);
-                        products.add(product);
-                    }
+                    return rs.getString("list_content");
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error fetching Products: " + e.getMessage());
         }
-
-        return gson.toJson(products);
+        System.out.println("Error fetching Products: " + listUUID);
+        return null;
     }
 
     public static boolean shoppingListExists(String user, String shoppingListName) {
@@ -99,32 +100,44 @@ public class Utils {
     }
 
     public static void updateShoppingListInServer(String user, String shoppingListUUID) {
+        String listContent = getListProducts(user,shoppingListUUID);
+
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(ROUTER_ADDRESS);
 
-            String listProducts = getListProducts(user, shoppingListUUID);
+            Message message = new Message();
 
-            // Construct the message with message type and content
-            String message = "updateList;" + shoppingListUUID + ";" + listProducts;
-            socket.send(message.getBytes(ZMQ.CHARSET));
+            message.setMethod("updateList");
+            message.setListUUID(shoppingListUUID);
+            message.setListcontent(listContent);
 
-            // Receive acknowledgment from the server (optional)
+            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+
             byte[] reply = socket.recv();
             System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
         }
     }
 
-    public static void sendShoppingListToServer(String shoppingListUUID, String shoppingListName) {
+    public static void sendShoppingListToServer(String user,String shoppingListUUID) {
+        String name = getListName(user,shoppingListUUID);
+        String listContent = getListProducts(user,shoppingListUUID);
+
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(ROUTER_ADDRESS);
 
-            // Construct the message with message type and content
-            String message = "createList;" + shoppingListUUID + ";" + shoppingListName;
-            socket.send(message.getBytes(ZMQ.CHARSET));
+            Message message = new Message();
 
-            // Receive acknowledgment from the server (optional)
+            message.setMethod("createList");
+            message.setListUUID(shoppingListUUID);
+            message.setListname(name);
+            message.setListcontent(listContent);
+
+            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+            //System.out.println("Sent message to server: " + message.toJson());
+
             byte[] reply = socket.recv();
             System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
         }
@@ -133,84 +146,137 @@ public class Utils {
     public static boolean productExistsInList(String user,String listUUID, String productName) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "SELECT * FROM list_products WHERE list_uuid = ? AND product_name = ?";
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
 
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, listUUID);
-                    pstmt.setString(2, productName);
-                    return pstmt.executeQuery().next();
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking if product exists in the shopping list: " + e.getMessage());
-        }
-        return false;
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
+
+        // check if the product exists in the MapPNCounter object
+        return mapPNCounter.contains(productName);
+    }
+
+    public static boolean productCounterIsZero(String user,String listUUID, String productName) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
+
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
+
+        // check if the product exists in the MapPNCounter object
+        return mapPNCounter.itemValue(productName) == 0;
     }
 
     public static boolean addProductToList(String user, String listUUID, String productName, int quantity) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "INSERT INTO list_products (list_uuid, product_name, quantity) VALUES (?, ?, ?)";
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
+        System.out.println("listContent: " + listContent);
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
 
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, listUUID);
-                    pstmt.setString(2, productName);
-                    pstmt.setInt(3, quantity);
-                    pstmt.executeUpdate();
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error adding product to the shopping list: " + e.getMessage());
-        }
-        return false;
+        // add the product to the MapPNCounter object
+        mapPNCounter.insert(productName,user,quantity);
+
+        // transform the MapPNCounter object into a string
+        String mapPNCounterString = mapPNCounter.toJson();
+
+        // update the list_ in the database
+        return updateListContent(user,listUUID, mapPNCounterString);
     }
 
     public static boolean updateProductInList(String user,String listUUID, String productName, int newQuantity) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "UPDATE list_products SET quantity = ? WHERE list_uuid = ? AND product_name = ?";
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
 
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setInt(1, newQuantity);
-                    pstmt.setString(2, listUUID);
-                    pstmt.setString(3, productName);
-                    int rowsAffected = pstmt.executeUpdate();
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
 
-                    return rowsAffected > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error updating product in the shopping list: " + e.getMessage());
+        // get current quantity of the product
+        int currentQuantity = mapPNCounter.itemValue(productName);
+
+        // get increment/decrement value
+        int increment = newQuantity - currentQuantity;
+        int decrement = currentQuantity - newQuantity;
+
+        // update the product in the MapPNCounter object
+        if (increment > 0) {
+            mapPNCounter.increment(productName,user,increment);
+        } else {
+            mapPNCounter.decrement(productName,user,decrement);
         }
-        return false;
+
+        // transform the MapPNCounter object into a string
+        String mapPNCounterString = mapPNCounter.toJson();
+
+        // update the list_content in the database
+        return updateListContent(user,listUUID, mapPNCounterString);
     }
 
     public static boolean removeProductFromList(String user,String listUUID, String productName) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
+        // get current list_content
+        String listContent = getListProducts(user, listUUID);
+
+        // transform the list_content into a MapPNCounter object
+        MapPNCounter mapPNCounter = toMapPNCounter(listContent);
+
+        // remove the product from the MapPNCounter object
+        mapPNCounter.remove(productName,user);
+
+        // transform the MapPNCounter object into a string
+        String mapPNCounterString = mapPNCounter.toJson();
+
+        // update the list_content in the database
+        return updateListContent(user,listUUID, mapPNCounterString);
+    }
+
+    public static boolean updateListContent(String user,String listUUID, String listContent) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
+
         try (Connection connection = DriverManager.getConnection(url)) {
             if (connection != null) {
-                String sql = "DELETE FROM list_products WHERE list_uuid = ? AND product_name = ?";
+                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ?";
 
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, listUUID);
-                    pstmt.setString(2, productName);
+                    pstmt.setString(1, listContent);
+                    pstmt.setString(2, listUUID);
                     int rowsAffected = pstmt.executeUpdate();
 
                     return rowsAffected > 0;
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error removing product from the shopping list: " + e.getMessage());
+            System.out.println("Error updating list content: " + e.getMessage());
         }
         return false;
+    }
+
+    public static void updateListFromServer(String user, String shoppingListUUID) {
+        try (ZContext context = new ZContext()) {
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect(ROUTER_ADDRESS);
+
+            Message message = new Message();
+            message.setMethod("getList");
+            message.setListUUID(shoppingListUUID);
+
+            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+            byte[] response = socket.recv();
+            Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
+
+            System.out.println("Received reply from server: " + reply.toString());
+
+            // Save the list in the database
+            updateListInDatabase(user,reply.getListUUID(), reply.getListcontent());
+        }
     }
 
     public static void getListFromServer(String user, String shoppingListUUID) {
@@ -218,73 +284,57 @@ public class Utils {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(ROUTER_ADDRESS);
 
-            // Construct the message with message type and content
-            String message = "getList;" + shoppingListUUID;
-            socket.send(message.getBytes(ZMQ.CHARSET));
+            Message message = new Message();
+            message.setMethod("getList");
+            message.setListUUID(shoppingListUUID);
 
-            // Receive acknowledgment from the server (optional)
-            byte[] reply = socket.recv();
-            String list = new String(reply, ZMQ.CHARSET);
+            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
 
-            System.out.println("Received reply from server: " + list);
-
-            //separate the list name from the list content
-            String[] listParts = list.split(";");
-            String listName = listParts[1];
-            list = listParts[2];
-
-
+            byte[] response = socket.recv();
+            Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
             // Save the list in the database
-            saveListInDatabase(user,listName,shoppingListUUID, list);
-
+            saveListInDatabase(user, reply.getListname(), reply.getListUUID(), reply.getListcontent());
         }
     }
 
-    private static void saveListInDatabase(String user, String listName, String shoppingListUUID, String list) {
+    public static boolean saveListInDatabase(String user, String listName, String shoppingListUUID, String listContent) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        //if list doesn't exist, create it (see if name already exists)
-        if (!shoppingListExists(user, listName)) {
-            try (Connection connection = DriverManager.getConnection(url)) {
-                if (connection != null) {
-                    String sql = "INSERT INTO shopping_lists (list_uuid, list_name) VALUES (?, ?)";
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "INSERT INTO shopping_lists (list_uuid, list_name, list_content) VALUES (?, ?, ?)";
 
-                    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                        pstmt.setString(1, shoppingListUUID);
-                        pstmt.setString(2, listName);
-                        pstmt.executeUpdate();
-                    }
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, shoppingListUUID);
+                    pstmt.setString(2, listName);
+                    pstmt.setString(3, listContent);
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    return rowsAffected > 0;
                 }
-            } catch (SQLException e) {
-                System.out.println("Error saving Shopping List to the database: " + e.getMessage());
             }
+        } catch (SQLException e) {
+            System.out.println("Error saving Shopping List to the database: " + e.getMessage());
         }
+        return false;
+    }
 
-        if(list.equals("[]")) {
-            return;
-        }
+    public static void updateListInDatabase(String user, String shoppingListUUID, String listContent) {
+        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
-        // separate the list in { and }
-        list = list.substring(1, list.length() - 1);
+        try (Connection connection = DriverManager.getConnection(url)) {
+            if (connection != null) {
+                String sql = "UPDATE shopping_lists SET list_content = ? WHERE list_uuid = ?";
 
-        // separate the products in commas where { is before the comma
-        String[] products = list.split(",(?=\\{)");
-
-        // for each product, separate the name and quantity
-        for (String product : products) {
-
-            // transform the product into a Product object
-            Product productObj = gson.fromJson(product, Product.class);
-
-            // if the product already exists in the list, update it
-            if (productExistsInList(user,shoppingListUUID, productObj.getName())) {
-                updateProductInList(user,shoppingListUUID, productObj.getName(), productObj.getQuantity());
-            } else {
-                // if the product doesn't exist in the list, add it
-                addProductToList(user,shoppingListUUID, productObj.getName(), productObj.getQuantity());
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, listContent);
+                    pstmt.setString(2, shoppingListUUID);
+                    pstmt.executeUpdate();
+                }
             }
-
+        } catch (SQLException e) {
+            System.out.println("Error updating Shopping List in the database: " + e.getMessage());
         }
     }
 }

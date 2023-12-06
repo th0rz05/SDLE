@@ -1,5 +1,6 @@
 package sdle.client.states;
 
+import sdle.client.utils.CRDT;
 import sdle.client.utils.Utils;
 
 import java.sql.*;
@@ -39,9 +40,12 @@ public class CreateListState implements State {
         // Perform actions for creating a shopping list here
         String shoppingListUUID = generateUniqueID();
 
+        CRDT.MapPNCounter mapPNCounter = new CRDT.MapPNCounter();
+        String mapPNCounterString = mapPNCounter.toJson();
+
         // Save the shopping list to the database
-        if (saveShoppingListToDatabase(shoppingListUUID, shoppingListName)) {
-            Utils.sendShoppingListToServer(shoppingListUUID, shoppingListName);
+        if (Utils.saveListInDatabase(user,shoppingListName,shoppingListUUID,mapPNCounterString)) {
+            Utils.sendShoppingListToServer(user,shoppingListUUID);
             System.out.println("Shopping List created with ID: " + shoppingListUUID);
         } else {
             System.out.println("Failed to save Shopping List to the database.");
@@ -62,25 +66,6 @@ public class CreateListState implements State {
         return UUID.randomUUID().toString();
     }
 
-    private boolean saveShoppingListToDatabase(String shoppingListUUID, String shoppingListName) {
-        String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
-
-        try (Connection connection = DriverManager.getConnection(url)) {
-            if (connection != null) {
-                String sql = "INSERT INTO shopping_lists (list_uuid, list_name) VALUES (?, ?)";
-
-                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                    pstmt.setString(1, shoppingListUUID);
-                    pstmt.setString(2, shoppingListName);
-                    pstmt.executeUpdate();
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error saving Shopping List to the database: " + e.getMessage());
-        }
-        return false;
-    }
 }
 
 

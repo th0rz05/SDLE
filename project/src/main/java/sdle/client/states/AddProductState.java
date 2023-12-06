@@ -21,13 +21,20 @@ public class AddProductState implements State {
         System.out.print("Enter the product name: ");
         String productName = scanner.nextLine().trim();
 
+        boolean productIsZero = false;
+
         // See if the product already exists in the list
         if (Utils.productExistsInList(user,listUUID, productName)) {
-            System.out.println("Product already exists in the shopping list.");
-            System.out.println("Press enter to continue...");
-            scanner.nextLine();
-            Utils.clearConsole();
-            return new ListProductsState(user,listUUID);
+            if(Utils.productCounterIsZero(user,listUUID,productName)){
+                productIsZero = true;
+            }
+            else{
+                System.out.println("Product already exists in the shopping list.");
+                System.out.println("Press enter to continue...");
+                scanner.nextLine();
+                Utils.clearConsole();
+                return new ListProductsState(user,listUUID);
+            }
         }
 
         System.out.print("Enter the quantity: ");
@@ -42,12 +49,23 @@ public class AddProductState implements State {
             return new ListProductsState(user,listUUID);
         }
 
-        // Save the product to the list
-        if (Utils.addProductToList(user,listUUID, productName, quantity)) {
-            Utils.updateShoppingListInServer(user,listUUID);
-            System.out.println("Product added to the shopping list.");
-        } else {
-            System.out.println("Failed to add product to the shopping list.");
+        if(productIsZero){
+            if (Utils.updateProductInList(user,listUUID, productName, quantity)) {
+                Utils.updateShoppingListInServer(user,listUUID);
+                System.out.println("Product updated in the shopping list.");
+            } else {
+                System.out.println("Failed to update product in the shopping list.");
+            }
+
+        }
+        else {
+            // Save the product to the list
+            if (Utils.addProductToList(user, listUUID, productName, quantity)) {
+                Utils.updateShoppingListInServer(user, listUUID);
+                System.out.println("Product added to the shopping list.");
+            } else {
+                System.out.println("Failed to add product to the shopping list.");
+            }
         }
 
         Utils.clearConsole();

@@ -10,7 +10,7 @@ public class MenuState implements State {
 
     public MenuState(String user) {
         this.user = user;
-        System.out.println("Welcome, " + user + "!\n\n\n");
+        System.out.println("Welcome, " + user + "!\n");
 
     }
 
