@@ -11,9 +11,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class Router {
-    private static final int ROUTER_PORT = 6000;
+    private static final int ROUTER_BASE_PORT = 6000;
     private static final int SERVER_BASE_PORT = 5000;
 
     private final List<Pair<String, Integer>> hashRing;
@@ -24,9 +25,12 @@ public class Router {
 
     private final int virtualNodesPerServer;
 
-    public Router(int numberOfServers, int virtualNodesPerServer) {
+    private int id;
+
+    public Router(int id, int numberOfServers, int virtualNodesPerServer) {
         this.numberOfServers = numberOfServers;
         this.virtualNodesPerServer = virtualNodesPerServer;
+        this.id = id;
         hashRing = createHashRing(numberOfServers, virtualNodesPerServer);
     }
 
@@ -78,6 +82,7 @@ public class Router {
     public void startRouter() {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket routerSocket = context.createSocket(SocketType.REP);
+            int ROUTER_PORT = ROUTER_BASE_PORT + id;
             routerSocket.bind("tcp://*:" + ROUTER_PORT);
 
             System.out.println("Router is running on port " + ROUTER_PORT);
@@ -102,6 +107,10 @@ public class Router {
                         // ask a thread to remove the server from the hash ring
                         new Thread(() -> handleLeaveHashRing(message)).start();
                     }
+                    case "hello" -> {
+                        // ask a thread to send a hello message to the server
+                        new Thread(() -> handleHello(routerSocket)).start();
+                    }
                     default -> {
                         //ask a thread to reroute the message
                         new Thread(() -> rerouteMessage(message,routerSocket)).start();
@@ -112,37 +121,67 @@ public class Router {
         }
     }
 
+    private void handleHello(ZMQ.Socket routerSocket) {
+        Message responseMessage = new Message();
+        responseMessage.setMethod("hello");
+
+        routerSocket.send(responseMessage.toJson().getBytes(ZMQ.CHARSET));
+        System.out.println("Sent hello message to server");
+    }
+
     private void rerouteMessage(Message message, ZMQ.Socket routerSocket) {
         String responsibleServer = getResponsibleServer(message.getListUUID());
         System.out.println("Responsible server: " + responsibleServer);
 
+        String nextNode = getNextNode(responsibleServer);
+        String nextNextNode = getNextNode(nextNode);
+
+        // Create list of responsible servers
+        List<String> responsibleServers = new ArrayList<>();
+        responsibleServers.add(responsibleServer);
+        responsibleServers.add(nextNode);
+        responsibleServers.add(nextNextNode);
+
         String virtualNode = responsibleServer.substring(3);
         message.setVirtualnode(virtualNode);
 
-        int serverPort = Integer.parseInt(responsibleServer.substring(1, 2)) + SERVER_BASE_PORT;
+        // Loop through servers
+        for (String server : responsibleServers) {
+            int serverPort = Integer.parseInt(server.substring(1, 2)) + SERVER_BASE_PORT;
 
-        //create a socket to send the message to the server
-        try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect("tcp://localhost:" + serverPort);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<String> future = executor.submit(() -> {
+                try (ZContext context = new ZContext()) {
+                    ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+                    socket.connect("tcp://localhost:" + serverPort);
 
-            String messageToSend = message.toJson();
+                    String messageToSend = message.toJson();
+                    System.out.println("Sending message to server: " + messageToSend);
 
-            System.out.println("Sending message to server: " + messageToSend);
+                    socket.send(messageToSend.getBytes(ZMQ.CHARSET));
 
-            socket.send(messageToSend.getBytes(ZMQ.CHARSET));
+                    byte[] response = socket.recv();
+                    String responseMessage = new String(response, ZMQ.CHARSET);
 
-            byte[] response = socket.recv();
+                    System.out.println("Received response from server: " + responseMessage);
 
-            String responseMessage = new String(response, ZMQ.CHARSET);
+                    socket.disconnect("tcp://localhost:" + serverPort);
+                    return responseMessage;
+                }
+            });
 
-            System.out.println("Received response from server: " + responseMessage);
-
-            socket.disconnect("tcp://localhost:" + serverPort);
-
-            routerSocket.send(responseMessage.getBytes(ZMQ.CHARSET));
+            try {
+                String response = future.get(5, TimeUnit.SECONDS); // Timeout set to 5 seconds
+                routerSocket.send(response.getBytes(ZMQ.CHARSET));
+                executor.shutdownNow();
+                break; // Exit the loop if a response is received within the timeout
+            } catch (TimeoutException | InterruptedException | ExecutionException e) {
+                System.err.println("Server " + server + " timed out. Trying the next server.");
+                executor.shutdownNow();
+            }
         }
     }
+
 
     private void handleJoinHashRing(Message message) {
         //sleep for 1 second
@@ -283,12 +322,55 @@ public class Router {
         }
     }
 
+    public String getNextNode(String node) {
+        // find node in hash ring
+        int index = 0;
+        for (Pair<String, Integer> pair : hashRing) {
+            if (pair.left().equals(node)) {
+                break;
+            }
+            index++;
+        }
+
+        // get the next node in the hash ring
+        return hashRing.get((index + 1) % hashRing.size()).left();
+    }
+
+    public String getPreviousNode(String node) {
+        // find node in hash ring
+        int index = 0;
+        for (Pair<String, Integer> pair : hashRing) {
+            if (pair.left().equals(node)) {
+                break;
+            }
+            index++;
+        }
+
+        // get the previous node in the hash ring
+        int size = hashRing.size();
+        return hashRing.get((index + size - 1) % size).left();
+    }
+
 
     public static void main(String[] args) {
+
+        if (args.length != 1) {
+            System.out.println("Usage: java -jar build/libs/router.jar <id>");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid id number");
+            return;
+        }
+
         int numberOfServers = 4; // Change this to the desired number of servers
         int virtualNodesPerServer = 3; // Change this to the desired number of virtual nodes per server
 
-        Router router = new Router(numberOfServers, virtualNodesPerServer);
+        Router router = new Router(id,numberOfServers, virtualNodesPerServer);
         router.startRouter();
     }
 

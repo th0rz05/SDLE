@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
@@ -21,6 +22,8 @@ public class Server {
     private static List<Server.Pair<String, Integer>> hashRing = null;
 
     private static final int SERVER_BASE_PORT = 5000;
+
+    private static final List<Integer> ROUTER_PORTS = new ArrayList<>(List.of(6001, 6002, 6003));
 
     public static void main(String[] args) {
 
@@ -44,9 +47,46 @@ public class Server {
         port = 5000 + id;
 
         try (ZContext context = new ZContext()) {
+            ZMQ.Socket routerSocket = null;
 
-            ZMQ.Socket routerSocket = context.createSocket(SocketType.REQ);
-            routerSocket.connect("tcp://localhost:6000"); // Connect to the router
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<ZMQ.Socket> future = executor.submit(() -> {
+                for (int routerPort : ROUTER_PORTS) {
+                    ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+                    socket.connect("tcp://localhost:" + routerPort);
+                    socket.setReceiveTimeOut(1000); // Timeout set to 1 second
+
+                    // Sending a test message to check if router responds
+                    Message message = new Message();
+                    message.setMethod("hello");
+                    socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+
+                    byte[] response = socket.recv();
+                    if (response != null) {
+                        // If response received, the router is responding
+                        System.out.println("Connected to router on port " + routerPort);
+                        return socket;
+                    } else {
+                        // Close the socket if no response
+                        socket.close();
+                    }
+                }
+                return null;
+            });
+
+            try {
+                routerSocket = future.get(); // Wait for the future result
+            } catch (InterruptedException | ExecutionException e) {
+                System.err.println("Failed to connect to any router.");
+            }
+
+            executor.shutdown(); // Shutdown executor
+
+            if (routerSocket == null) {
+                System.err.println("No available routers to connect.");
+                return;
+            }
 
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
             socket.bind("tcp://*:" + port);
@@ -283,8 +323,6 @@ public class Server {
             index++;
         }
 
-        //S4V2,-612:S3V2,-235:S2V2,-189:S3V1,-56:S1V3,180:S2V1,361:S2V3,416:S4V3,525:S1V1,577:S1V2,587:S4V1,751:S3V3,874:
-        //S4V2,-612:S5V2,-602:S3V2,-235:S2V2,-189:S3V1,-56:S5V1,177:S1V3,180:S2V1,361:S2V3,416:S5V3,456:S4V3,525:S1V1,577:S1V2,587:S4V1,751:S3V3,874:
         // get the previous node in the hash ring
         int size = hashRing.size();
         return hashRing.get((index + size - 1) % size).left();
