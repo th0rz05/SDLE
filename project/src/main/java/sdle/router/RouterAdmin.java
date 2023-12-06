@@ -10,7 +10,7 @@ public class RouterAdmin {
         //send a message to the router in port 6000
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect("tcp://localhost:6000");
+            socket.connect("tcp://localhost:6001");
 
             Message message = new Message();
             message.setMethod("leaveHashRing");

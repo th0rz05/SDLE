@@ -296,7 +296,7 @@ public class Utils {
             byte[] response = socket.recv();
             Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
-            if(reply.getMethod().equals("error")){
+            if(reply.getMethod() !=null && reply.getMethod().equals("error")){
                 System.out.println("Could not get list from server");
                 return false;
             }

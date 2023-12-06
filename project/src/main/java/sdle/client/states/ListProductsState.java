@@ -2,6 +2,7 @@ package sdle.client.states;
 
 import sdle.client.utils.Utils;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -22,7 +23,7 @@ public class ListProductsState implements State {
     }
 
     @Override
-    public State run() {
+    public State run(){
         //see if null
         if (listUUID == null){
             // Get input for the shopping list ID
@@ -47,44 +48,61 @@ public class ListProductsState implements State {
             System.out.println("Shopping List not updated");
         }
 
+        long lastUpdateTime = System.currentTimeMillis();
+
         // Display products in the specified list
         Utils.displayListProducts(user,listUUID);
 
+        displayOptions();
+
 
         while (true) {
-            displayOptions();
-            String input = scanner.nextLine().trim().toLowerCase();
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - lastUpdateTime;
 
-            switch (input) {
-                case "1" -> {
-                    Utils.clearConsole();
-                    return new AddProductState(user,listUUID);
+            // Check if one second has elapsed
+            if (elapsedTime >= 2000) { // 1000 milliseconds = 1 second
+
+                return new ListProductsState(user,listUUID);
+            }
+
+            // Check if the user has typed anything without blocking
+            try {
+                if (System.in.available() > 0) {
+                    byte[] inputBytes = new byte[System.in.available()];
+                    System.in.read(inputBytes);
+                    String input = new String(inputBytes).trim().toLowerCase();
+
+                    switch (input) {
+                        case "1" -> {
+                            Utils.clearConsole();
+                            return new AddProductState(user,listUUID);
+                        }
+                        case "2" -> {
+                            Utils.clearConsole();
+                            return new RemoveProductState(user,listUUID);
+                        }
+                        case "3" -> {
+                            Utils.clearConsole();
+                            return new UpdateProductState(user,listUUID);
+                        }
+                        case "4" -> {
+                            Utils.clearConsole();
+                            return new DeleteListState(user,listUUID);
+                        }
+                        case "q" -> {
+                            Utils.clearConsole();
+                            // Transition back to the menu state
+                            return new MenuState(user);
+                        }
+                        default -> {
+                            Utils.clearConsole();
+                            System.out.println("Invalid input. Please try again.");
+                        }
+                    }
                 }
-                case "2" -> {
-                    Utils.clearConsole();
-                    return new RemoveProductState(user,listUUID);
-                }
-                case "3" -> {
-                    Utils.clearConsole();
-                    return new UpdateProductState(user,listUUID);
-                }
-                case "4" -> {
-                    Utils.clearConsole();
-                    return new DeleteListState(user,listUUID);
-                }
-                case "5" -> {
-                    Utils.clearConsole();
-                    return new ListProductsState(user,listUUID);
-                }
-                case "q" -> {
-                    Utils.clearConsole();
-                    // Transition back to the menu state
-                    return new MenuState(user);
-                }
-                default -> {
-                    Utils.clearConsole();
-                    System.out.println("Invalid input. Please try again.");
-                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -117,7 +135,6 @@ public class ListProductsState implements State {
         System.out.println("2 - Remove products");
         System.out.println("3 - Update products");
         System.out.println("4 - Delete shopping list");
-        System.out.println("5 - Sync shopping list");
         System.out.println("Enter 'Q' to return to the main menu");
         System.out.print("Your choice: ");
     }
