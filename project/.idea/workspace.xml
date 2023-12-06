@@ -6,21 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="adding server to the hash ring now working">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/Product.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/AddProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/CreateListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/DeleteListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/LoginState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/MenuState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/RemoveProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/UpdateProductState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_1.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_2.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_3.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_4.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
     </list>
@@ -94,7 +83,7 @@
       <recent name="sdle.server.utils" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.CRDT">
+  <component name="RunManager" selected="Application.RouterAdmin">
     <configuration name="CRDT" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="sdle.client.utils.CRDT" />
       <module name="project.main" />
@@ -108,12 +97,12 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="sdle.client.Client" />
+    <configuration name="RouterAdmin" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sdle.router.RouterAdmin" />
       <module name="project.main" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="sdle.client.utils.*" />
+          <option name="PATTERN" value="sdle.router.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -190,11 +179,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.RouterAdmin" />
         <item itemvalue="Application.CRDT" />
         <item itemvalue="Gradle.project [clientJar]" />
         <item itemvalue="Gradle.project [serverJar]" />
         <item itemvalue="Gradle.project [clean clientJar]" />
-        <item itemvalue="Application.Client" />
       </list>
     </recent_temporary>
   </component>

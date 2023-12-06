@@ -115,6 +115,10 @@ public class Server {
                         // Call thread to handle add server to hash ring message
                         new Thread(() -> handleAddServerToHashRingMessage(id,message,socket)).start();
                     }
+                    case "removeServerFromHashRing" -> {
+                        // Call thread to handle remove server from hash ring message
+                        new Thread(() -> handleRemoveServerFromHashRingMessage(id,message,socket)).start();
+                    }
                     case "getKeys" ->{
                         // Call thread to handle get keys message
                         new Thread(() -> handleGetKeysMessage(id,message,socket)).start();
@@ -267,6 +271,23 @@ public class Server {
 
         // get the next node in the hash ring
         return hashRing.get((index + 1) % hashRing.size()).left();
+    }
+
+    public static String getPreviousNode(String node) {
+        // find node in hash ring
+        int index = 0;
+        for (Pair<String, Integer> pair : hashRing) {
+            if (pair.left().equals(node)) {
+                break;
+            }
+            index++;
+        }
+
+        //S4V2,-612:S3V2,-235:S2V2,-189:S3V1,-56:S1V3,180:S2V1,361:S2V3,416:S4V3,525:S1V1,577:S1V2,587:S4V1,751:S3V3,874:
+        //S4V2,-612:S5V2,-602:S3V2,-235:S2V2,-189:S3V1,-56:S5V1,177:S1V3,180:S2V1,361:S2V3,416:S5V3,456:S4V3,525:S1V1,577:S1V2,587:S4V1,751:S3V3,874:
+        // get the previous node in the hash ring
+        int size = hashRing.size();
+        return hashRing.get((index + size - 1) % size).left();
     }
 
     public static String getNodesForReplication(String node, int numberOfNodes) {
@@ -651,6 +672,89 @@ public class Server {
         }
 
         System.out.println("Hash ring updated.");
+    }
+
+    private static void handleRemoveServerFromHashRingMessage(int id,Message message,ZMQ.Socket socket) {
+        removeServerFromHashRing(id,message.getHashRing(),message.getServerId(),
+                message.getNrVirtualNodes());
+
+        //send response to client
+        String response = "Removed server from hash ring in server " + id;
+
+        socket.send(response.getBytes(ZMQ.CHARSET));
+    }
+
+    public static void removeServerFromHashRing(int id,String hashRingString,String serverId,
+                                                String virtualNodesPerServer) {
+        System.out.println("Updating hash ring...");
+
+        int virtualNodes = Integer.parseInt(virtualNodesPerServer);
+
+        for (int i = 1; i <= virtualNodes; i++) {
+            String node = "S" + id + "V" + i; // "S0V0"
+            System.out.println("Node: " + node);
+            // see if node is after the server to remove
+            String previousNode = getPreviousNode(node);
+            System.out.println("Previous node: " + previousNode);
+            if(previousNode.substring(1,2).equals(serverId)){
+                // get the keys from replication level 1 and set them to replication level 0
+                String keys = getKeys(id,String.valueOf(i),"1");
+                String [] keysArray = keys.split("/");
+                for (String key : keysArray) {
+                    String[] keyParts = key.split(";");
+                    String listUUID = keyParts[0];
+                    updateReplicationLevel(id,String.valueOf(i),listUUID,"0");
+                }
+            }
+        }
+
+        // for every server mark to delete the replication level 1 and level 2
+
+        // go through each virtual node
+        for (int i = 1; i <= virtualNodes; i++) {
+            String node = "S" + id + "V" + i; // "S0V0"
+            System.out.println("Node: " + node);
+            // mark to delete the replication level 1 and level 2
+            String keys = getKeys(id, String.valueOf(i), "1");
+            String[] keysArray = keys.split("/");
+            for (String key : keysArray) {
+                String[] keyParts = key.split(";");
+                String listUUID = keyParts[0];
+                markListToDelete(id, String.valueOf(i), listUUID);
+            }
+            keys = getKeys(id, String.valueOf(i), "2");
+            keysArray = keys.split("/");
+            for (String key : keysArray) {
+                String[] keyParts = key.split(";");
+                String listUUID = keyParts[0];
+                markListToDelete(id, String.valueOf(i), listUUID);
+            }
+        }
+
+        hashRing = getHashRing(hashRingString.split(":"));
+
+        System.out.println("Hash ring updated.");
+
+    }
+
+    public static void updateReplicationLevel(int id,String virtualNode, String listUUID, String replicationLevel) {
+        System.out.println("Updating replication level...");
+
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "UPDATE shopping_lists SET replicated = ? WHERE list_uuid = ? AND virtualnode_id = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setString(1, replicationLevel);
+                    pstmt.setString(2, listUUID);
+                    pstmt.setString(3, virtualNode);
+                    pstmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error updating replication level: " + e.getMessage());
+        }
     }
 
     private static void handleGetKeysMessage(int id,Message message,ZMQ.Socket socket) {

@@ -98,6 +98,10 @@ public class Router {
                         // ask a thread to add the server to the hash ring
                         new Thread(() -> handleJoinHashRing(message)).start();
                     }
+                    case "leaveHashRing" -> {
+                        // ask a thread to remove the server from the hash ring
+                        new Thread(() -> handleLeaveHashRing(message)).start();
+                    }
                     default -> {
                         //ask a thread to reroute the message
                         new Thread(() -> rerouteMessage(message,routerSocket)).start();
@@ -148,7 +152,14 @@ public class Router {
             e.printStackTrace();
         }
         addServerToHashRing(message.getServerId());
-        sendHashRingToServers(Integer.parseInt(message.getServerId()), virtualNodesPerServer);
+        sendHashRingToServers("addServerToHashRing",Integer.parseInt(message.getServerId()),
+                virtualNodesPerServer);
+    }
+
+    private void handleLeaveHashRing(Message message) {
+        removeServerFromHashRing(message.getServerId());
+        sendHashRingToServers("removeServerFromHashRing",Integer.parseInt(message.getServerId()),
+                virtualNodesPerServer);
     }
 
     private void sendHashRingToServer(ZMQ.Socket routerSocket) {
@@ -171,6 +182,25 @@ public class Router {
         hashRing.sort(Comparator.comparingInt(Pair::right));
     }
 
+    public void removeServerFromHashRing(String serverId){
+        Integer serverIdInt = Integer.parseInt(serverId);
+        //remove serverId from serverIds
+        serverIds.remove(serverIdInt);
+        for (int i = 1; i <= 3; i++) {
+            String serverNode = "S" + serverIdInt + "V" + i;
+            // find the pair with the serverNode
+            Pair<String, Integer> pairToRemove = null;
+            for (Pair<String, Integer> pair : hashRing) {
+                if (pair.left().equals(serverNode)) {
+                    pairToRemove = pair;
+                    break;
+                }
+            }
+            hashRing.remove(pairToRemove);
+        }
+        hashRing.sort(Comparator.comparingInt(Pair::right));
+    }
+
     public String getHashRingAsString() {
         StringBuilder sb = new StringBuilder();
         for (Pair<String, Integer> pair : hashRing) {
@@ -179,7 +209,7 @@ public class Router {
         return sb.toString();
     }
 
-    public void sendHashRingToServers(int newServerId,int numberOfVirtualNodes) {
+    public void sendHashRingToServers(String method,int newServerId,int numberOfVirtualNodes) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
 
@@ -188,7 +218,7 @@ public class Router {
                 socket.connect("tcp://localhost:" + serverPort);
 
                 Message message = new Message();
-                message.setMethod("addServerToHashRing");
+                message.setMethod(method);
                 message.setHashRing(getHashRingAsString());
                 message.setServerId(String.valueOf(newServerId));
                 message.setNrVirtualNodes(String.valueOf(numberOfVirtualNodes));
