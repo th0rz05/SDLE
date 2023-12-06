@@ -63,7 +63,7 @@ public class ListProductsState implements State {
             long elapsedTime = currentTime - lastUpdateTime;
 
             // Check if one second has elapsed
-            if (elapsedTime >= 1000) { // 1000 milliseconds = 1 second
+            if (elapsedTime >= 2000) { // 1000 milliseconds = 1 second
 
                 return new ListProductsState(user,listUUID);
             }

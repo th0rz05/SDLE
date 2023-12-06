@@ -107,12 +107,15 @@ public class Utils {
         String listContent = getListProducts(user,shoppingListUUID);
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = connectRouter(context);
+            int routerPort = connectRouter();
 
-            if(socket == null){
-                System.out.println("Could not connect to router");
+            if(routerPort == 0){
+                System.out.println("\nCould not connect to router");
                 return;
             }
+
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect(ROUTER_ADDRESS + routerPort);
 
             Message message = new Message();
 
@@ -121,7 +124,6 @@ public class Utils {
             message.setListcontent(listContent);
 
             socket.send(message.toJson().getBytes(ZMQ.CHARSET));
-
 
             byte[] reply = socket.recv();
             System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
@@ -133,12 +135,15 @@ public class Utils {
         String listContent = getListProducts(user,shoppingListUUID);
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = connectRouter(context);
+            int routerPort = connectRouter();
 
-            if(socket == null){
-                System.out.println("Could not connect to router");
+            if(routerPort == 0){
+                System.out.println("\nCould not connect to router");
                 return;
             }
+
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect(ROUTER_ADDRESS + routerPort);
 
             Message message = new Message();
 
@@ -272,12 +277,15 @@ public class Utils {
 
     public static boolean updateListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = connectRouter(context);
+            int routerPort = connectRouter();
 
-            if(socket == null){
+            if(routerPort == 0){
                 System.out.println("\nCould not connect to router");
                 return false;
             }
+
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect(ROUTER_ADDRESS + routerPort);
 
             Message message = new Message();
             message.setMethod("getList");
@@ -289,7 +297,7 @@ public class Utils {
             Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
             if(reply.getMethod()!= null && reply.getMethod().equals("error")){
-                System.out.println("Could not get list from server");
+                //System.out.println("\nCould not connect to server");
                 return false;
             }
 
@@ -300,12 +308,15 @@ public class Utils {
 
     public static boolean getListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = connectRouter(context);
+            int routerPort = connectRouter();
 
-            if(socket == null){
-                System.out.println("Could not connect to router");
+            if(routerPort == 0){
+                System.out.println("\nCould not connect to router");
                 return false;
             }
+
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect(ROUTER_ADDRESS + routerPort);
 
             Message message = new Message();
             message.setMethod("getList");
@@ -317,7 +328,7 @@ public class Utils {
             Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
             if(reply.getMethod() !=null && reply.getMethod().equals("error")){
-                System.out.println("Could not get list from server");
+                System.out.println("\nCould not connect to server");
                 return false;
             }
 
@@ -369,8 +380,9 @@ public class Utils {
         return false;
     }
 
-    public static ZMQ.Socket connectRouter(ZContext context) {
+    public static int connectRouter() {
         ZMQ.Socket routerSocket = null;
+        ZContext context = new ZContext();
         for (int routerPort : ROUTER_PORTS) {
             routerSocket = context.createSocket(SocketType.REQ);
             routerSocket.connect("tcp://localhost:" + routerPort);
@@ -396,10 +408,10 @@ public class Utils {
 
             if (responseMessageObject.getMethod().equals("hello")) {
                 //System.out.println("Connected to router on port " + routerPort);
-                return routerSocket;
+                return routerPort;
             }
         }
-        return null;
+        return 0;
     }
 }
 

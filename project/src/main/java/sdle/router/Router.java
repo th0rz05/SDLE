@@ -11,7 +11,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.*;
 
 public class Router {
     private static final int ROUTER_BASE_PORT = 6000;
@@ -158,7 +157,7 @@ public class Router {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 socket.connect("tcp://localhost:" + serverPort);
 
-                socket.setReceiveTimeOut(2000);
+                socket.setReceiveTimeOut(1000);
 
                 String messageToSend = message.toJson();
 
@@ -209,6 +208,8 @@ public class Router {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect("tcp://localhost:" + serverPort);
 
+            socket.setReceiveTimeOut(1000);
+
             String messageToSend = message.toJson();
 
             System.out.println("Sending message to server: " + messageToSend);
@@ -216,6 +217,16 @@ public class Router {
             socket.send(messageToSend.getBytes(ZMQ.CHARSET));
 
             byte[] response = socket.recv();
+
+            if (response == null) {
+                System.out.println("Server " + responsibleServer + " did not respond");
+                socket.close();
+                Message responseMessage = new Message();
+                responseMessage.setMethod("error");
+                routerSocket.send(responseMessage.toJson().getBytes(ZMQ.CHARSET));
+                System.out.println("Sent error message to client");
+                return;
+            }
 
             String responseMessage = new String(response, ZMQ.CHARSET);
 
