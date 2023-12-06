@@ -41,7 +41,11 @@ public class ListProductsState implements State {
             listUUID = getListUUID(listName);
         }
 
-        Utils.updateListFromServer(user,listUUID);
+        if(Utils.updateListFromServer(user,listUUID)){
+            System.out.println("Shopping List updated with ID: " + listUUID);
+        }else{
+            System.out.println("Shopping List not updated");
+        }
 
         // Display products in the specified list
         Utils.displayListProducts(user,listUUID);

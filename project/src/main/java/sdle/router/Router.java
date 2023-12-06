@@ -111,6 +111,10 @@ public class Router {
                         // ask a thread to send a hello message to the server
                         new Thread(() -> handleHello(routerSocket)).start();
                     }
+                    case "getList" -> {
+                        // ask a thread to reroute the message
+                        new Thread(() -> handleGetList(message,routerSocket)).start();
+                    }
                     default -> {
                         //ask a thread to reroute the message
                         new Thread(() -> rerouteMessage(message,routerSocket)).start();
@@ -129,7 +133,7 @@ public class Router {
         System.out.println("Sent hello message to server");
     }
 
-    private void rerouteMessage(Message message, ZMQ.Socket routerSocket) {
+    public void handleGetList(Message message, ZMQ.Socket routerSocket) {
         String responsibleServer = getResponsibleServer(message.getListUUID());
         System.out.println("Responsible server: " + responsibleServer);
 
@@ -142,43 +146,84 @@ public class Router {
         responsibleServers.add(nextNode);
         responsibleServers.add(nextNextNode);
 
+        // Loop through servers
+        for (String server : responsibleServers) {
+            String virtualNode = server.substring(3);
+            int serverPort = Integer.parseInt(server.substring(1, 2)) + SERVER_BASE_PORT;
+
+            message.setVirtualnode(virtualNode);
+
+            //create a socket to send the message to the server
+            try (ZContext context = new ZContext()) {
+                ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+                socket.connect("tcp://localhost:" + serverPort);
+
+                socket.setReceiveTimeOut(2000);
+
+                String messageToSend = message.toJson();
+
+                System.out.println("Sending message to server: " + messageToSend);
+
+                socket.send(messageToSend.getBytes(ZMQ.CHARSET));
+
+                byte[] response = socket.recv();
+
+                if (response == null) {
+                    System.out.println("Server " + server + " did not respond");
+                    socket.close();
+                    continue;
+                }
+
+                String responseMessage = new String(response, ZMQ.CHARSET);
+
+                System.out.println("Received response from server: " + responseMessage);
+
+                socket.disconnect("tcp://localhost:" + serverPort);
+
+                routerSocket.send(responseMessage.getBytes(ZMQ.CHARSET));
+
+                return;
+            }
+        }
+
+        // If no server responded, send an error message
+        Message responseMessage = new Message();
+        responseMessage.setMethod("error");
+
+        routerSocket.send(responseMessage.toJson().getBytes(ZMQ.CHARSET));
+
+        System.out.println("No server responded");
+    }
+
+    private void rerouteMessage(Message message, ZMQ.Socket routerSocket) {
+        String responsibleServer = getResponsibleServer(message.getListUUID());
+        System.out.println("Responsible server: " + responsibleServer);
+
         String virtualNode = responsibleServer.substring(3);
         message.setVirtualnode(virtualNode);
 
-        // Loop through servers
-        for (String server : responsibleServers) {
-            int serverPort = Integer.parseInt(server.substring(1, 2)) + SERVER_BASE_PORT;
+        int serverPort = Integer.parseInt(responsibleServer.substring(1, 2)) + SERVER_BASE_PORT;
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future<String> future = executor.submit(() -> {
-                try (ZContext context = new ZContext()) {
-                    ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-                    socket.connect("tcp://localhost:" + serverPort);
+        //create a socket to send the message to the server
+        try (ZContext context = new ZContext()) {
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket.connect("tcp://localhost:" + serverPort);
 
-                    String messageToSend = message.toJson();
-                    System.out.println("Sending message to server: " + messageToSend);
+            String messageToSend = message.toJson();
 
-                    socket.send(messageToSend.getBytes(ZMQ.CHARSET));
+            System.out.println("Sending message to server: " + messageToSend);
 
-                    byte[] response = socket.recv();
-                    String responseMessage = new String(response, ZMQ.CHARSET);
+            socket.send(messageToSend.getBytes(ZMQ.CHARSET));
 
-                    System.out.println("Received response from server: " + responseMessage);
+            byte[] response = socket.recv();
 
-                    socket.disconnect("tcp://localhost:" + serverPort);
-                    return responseMessage;
-                }
-            });
+            String responseMessage = new String(response, ZMQ.CHARSET);
 
-            try {
-                String response = future.get(5, TimeUnit.SECONDS); // Timeout set to 5 seconds
-                routerSocket.send(response.getBytes(ZMQ.CHARSET));
-                executor.shutdownNow();
-                break; // Exit the loop if a response is received within the timeout
-            } catch (TimeoutException | InterruptedException | ExecutionException e) {
-                System.err.println("Server " + server + " timed out. Trying the next server.");
-                executor.shutdownNow();
-            }
+            System.out.println("Received response from server: " + responseMessage);
+
+            socket.disconnect("tcp://localhost:" + serverPort);
+
+            routerSocket.send(responseMessage.getBytes(ZMQ.CHARSET));
         }
     }
 

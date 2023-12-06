@@ -49,39 +49,38 @@ public class Server {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket routerSocket = null;
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future<ZMQ.Socket> future = executor.submit(() -> {
-                for (int routerPort : ROUTER_PORTS) {
-                    ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-                    socket.connect("tcp://localhost:" + routerPort);
-                    socket.setReceiveTimeOut(1000); // Timeout set to 1 second
+            for (int routerPort : ROUTER_PORTS) {
+                routerSocket = context.createSocket(SocketType.REQ);
+                routerSocket.connect("tcp://localhost:" + routerPort);
+                System.out.println("trying to connect to port " + routerPort + "...");
 
-                    // Sending a test message to check if router responds
-                    Message message = new Message();
-                    message.setMethod("hello");
-                    socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+                routerSocket.setReceiveTimeOut(1000);
 
+                Message message = new Message();
+                message.setMethod("hello");
 
-                    byte[] response = socket.recv();
-                    if (response != null) {
-                        // If response received, the router is responding
-                        System.out.println("Connected to router on port " + routerPort);
-                        return socket;
-                    } else {
-                        // Close the socket if no response
-                        socket.close();
-                    }
+                routerSocket.send(message.toJson().getBytes(ZMQ.CHARSET));
+
+                byte[] response = routerSocket.recv();
+
+                if (response == null) {
+                    System.out.println("No response from router on port " + routerPort);
+                    routerSocket.close();
+                    routerSocket = null;
+                    continue;
                 }
-                return null;
-            });
+                String responseMessage = new String(response, ZMQ.CHARSET);
 
-            try {
-                routerSocket = future.get(); // Wait for the future result
-            } catch (InterruptedException | ExecutionException e) {
-                System.err.println("Failed to connect to any router.");
+                Message responseMessageObject = Message.fromJson(responseMessage);
+
+                if (responseMessageObject.getMethod().equals("hello")) {
+                    System.out.println("Connected to router on port " + routerPort);
+                    break;
+                }
+
+                routerSocket.close();
+                routerSocket = null;
             }
-
-            executor.shutdown(); // Shutdown executor
 
             if (routerSocket == null) {
                 System.err.println("No available routers to connect.");

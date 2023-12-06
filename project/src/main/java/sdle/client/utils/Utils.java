@@ -11,7 +11,7 @@ import static sdle.client.utils.CRDT.toMapPNCounter;
 
 public class Utils {
 
-    private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:6000";
+    private static final String ROUTER_ADDRESS = "tcp://127.0.0.1:6001";
 
     public static void clearConsole() {
         // Print multiple new lines to simulate clearing the console
@@ -258,7 +258,7 @@ public class Utils {
         return false;
     }
 
-    public static void updateListFromServer(String user, String shoppingListUUID) {
+    public static boolean updateListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(ROUTER_ADDRESS);
@@ -272,14 +272,17 @@ public class Utils {
             byte[] response = socket.recv();
             Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
-            System.out.println("Received reply from server: " + reply.toString());
+            if(reply.getMethod()!= null && reply.getMethod().equals("error")){
+                System.out.println("Could not get list from server");
+                return false;
+            }
 
             // Save the list in the database
-            updateListInDatabase(user,reply.getListUUID(), reply.getListcontent());
+            return updateListInDatabase(user,reply.getListUUID(), reply.getListcontent());
         }
     }
 
-    public static void getListFromServer(String user, String shoppingListUUID) {
+    public static boolean getListFromServer(String user, String shoppingListUUID) {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(ROUTER_ADDRESS);
@@ -293,8 +296,13 @@ public class Utils {
             byte[] response = socket.recv();
             Message reply = Message.fromJson(new String(response, ZMQ.CHARSET));
 
+            if(reply.getMethod().equals("error")){
+                System.out.println("Could not get list from server");
+                return false;
+            }
+
             // Save the list in the database
-            saveListInDatabase(user, reply.getListname(), reply.getListUUID(), reply.getListcontent());
+            return saveListInDatabase(user, reply.getListname(), reply.getListUUID(), reply.getListcontent());
         }
     }
 
@@ -320,7 +328,7 @@ public class Utils {
         return false;
     }
 
-    public static void updateListInDatabase(String user, String shoppingListUUID, String listContent) {
+    public static boolean updateListInDatabase(String user, String shoppingListUUID, String listContent) {
         String url = "jdbc:sqlite:database/client/" + user + "_shopping.db";
 
         try (Connection connection = DriverManager.getConnection(url)) {
@@ -330,12 +338,15 @@ public class Utils {
                 try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                     pstmt.setString(1, listContent);
                     pstmt.setString(2, shoppingListUUID);
-                    pstmt.executeUpdate();
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    return rowsAffected > 0;
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error updating Shopping List in the database: " + e.getMessage());
         }
+        return false;
     }
 }
 
