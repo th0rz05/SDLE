@@ -25,3 +25,7 @@ And to run the client:
 ```bash
 java -jar build/libs/client.jar
 ```
+
+## Demo
+
+[![Demo Video](https://img.youtube.com/vi/CeYWqGcszhw/0.jpg)](https://youtu.be/CeYWqGcszhw)
