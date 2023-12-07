@@ -4,14 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="adding server to the hash ring now working">
+    <list default="true" id="277eebae-0373-4a5a-94f4-d0012b47fa39" name="Changes" comment="updated timeouts">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/client/tiago_shopping.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_2.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" afterPath="$PROJECT_DIR$/database/server/server_3.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/client/tiago_shopping.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_1.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_2.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_3.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/server/server_4.db" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/states/ListProductsState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Message.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/client/utils/Utils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/Router.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/router/utils/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/router/utils/Message.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/sdle/server/utils/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sdle/server/utils/Message.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,19 +64,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/tiagobarbosa05/Documents/University/SDLE/project/src/main/java/sdle/router",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tiagobarbosa05/Documents/University/SDLE/project/src/main/java/sdle/router&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="sdle.states" />
@@ -226,7 +231,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701742605740</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="updated timeouts">
+      <option name="closed" value="true" />
+      <created>1701900361522</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1701900361522</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -245,6 +258,7 @@
     <MESSAGE value="add users for the local side and started a server that listens to usernames" />
     <MESSAGE value="add way to add a server to the hash ring" />
     <MESSAGE value="adding server to the hash ring now working" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding server to the hash ring now working" />
+    <MESSAGE value="updated timeouts" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated timeouts" />
   </component>
 </project>

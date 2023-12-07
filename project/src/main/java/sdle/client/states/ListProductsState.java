@@ -44,13 +44,23 @@ public class ListProductsState implements State {
 
         Utils.updateShoppingListInServer(user,listUUID);
 
+        boolean updated = false;
+
         if(Utils.updateListFromServer(user,listUUID)){
-            System.out.println("Shopping List updated with ID: " + listUUID);
-        }else{
-            System.out.println("Shopping List not updated");
+            updated = true;
         }
 
         long lastUpdateTime = System.currentTimeMillis();
+
+
+        Utils.clearConsole();
+
+        if(updated){
+            System.out.println("Shopping list updated from server.");
+        }
+        else{
+            System.out.println("Shopping list not updated from server.");
+        }
 
         // Display products in the specified list
         Utils.displayListProducts(user,listUUID);

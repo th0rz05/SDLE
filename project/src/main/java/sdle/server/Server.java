@@ -95,9 +95,20 @@ public class Server {
 
             createDatabase(id);
 
+            //launch a thread that every 10 seconds checks for hinted handoffs
+            //ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+            //executor.scheduleAtFixedRate(() -> {
+                //searchHintedHandoff(id);
+            //}, 10, 10, TimeUnit.SECONDS);
+
             // call a function when ctrl+c is pressed
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("Shutting down...");
+                // end all threads
+                //executor.shutdown();
+                // wait for all threads to end
+                //while (!executor.isTerminated()) {
+                //}
             }));
 
             if (joinHashRing) {
@@ -181,7 +192,10 @@ public class Server {
     }
 
     private static void updateListToReplicationNodes(int id,String listUUID, String listContent) {
-        String nodes = getNodesForReplication(getResponsibleServer(listUUID),2);
+        String nodes = getNodesForReplication(getResponsibleServer(listUUID),10);
+
+        String originalNode1 = nodes.split(";")[0];
+        String originalNode2 = nodes.split(";")[1];
 
         System.out.println("Nodes for replication: " + nodes);
 
@@ -192,8 +206,13 @@ public class Server {
 
         String[] nodesArray = nodes.split(";");
 
-        for (String node : nodesArray) {
+        int replicationLevel = 1;
 
+        int nodesReplicated = 0;
+
+        int nodesSeen = 0;
+
+        for (String node : nodesArray) {
             int port = Integer.parseInt(node.substring(1,2)) + SERVER_BASE_PORT;
 
             System.out.println("Port: " + port);
@@ -203,27 +222,61 @@ public class Server {
             if(port == 5000 + id) {
                 System.out.println("Same server, storing in database...");
                 replicateUpdateList(id, virtualNode, listUUID, listContent);
+                nodesSeen++;
+                nodesReplicated++;
+                replicationLevel++;
                 continue;
             }
 
             message.setVirtualnode(virtualNode);
 
+            if(nodesSeen >= 2){
+                if(replicationLevel == 1) {
+                    message.setHintedHandoff(originalNode1 + ";update");
+                    System.out.println("Hinted handoff: " + originalNode1);
+                }
+                else{
+                    message.setHintedHandoff(originalNode2 + ";update");
+                    System.out.println("Hinted handoff: " + originalNode2);
+                }
+            }
+
             try (ZContext context = new ZContext()) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 socket.connect("tcp://localhost:" + port);
+                socket.setReceiveTimeOut(1000);
                 System.out.println("connected to port " + port + "...");
                 socket.send(message.toJson().getBytes(ZMQ.CHARSET));
                 System.out.println("Sent request to server: " + message.toJson());
                 byte[] response = socket.recv();
+
+                if(response == null){
+                    System.out.println("No response from server " + port);
+                    nodesSeen++;
+                    if(nodesSeen == 10){
+                        break;
+                    }
+                    continue;
+                }
                 String responseMessage = new String(response, ZMQ.CHARSET);
                 System.out.println("Received response from server: " + responseMessage);
             }
-        }
+            nodesSeen++;
+            nodesReplicated++;
+            replicationLevel++;
 
+            if(nodesReplicated == 2){
+                System.out.println("Replicated to 2 nodes, breaking...");
+                break;
+            }
+        }
     }
 
     private static void sendListToReplicationNodes(int id,String listUUID, String listName, String listContent) {
-        String nodes = getNodesForReplication(getResponsibleServer(listUUID),2);
+        String nodes = getNodesForReplication(getResponsibleServer(listUUID),10);
+
+        String originalNode1 = nodes.split(";")[0];
+        String originalNode2 = nodes.split(";")[1];
 
         System.out.println("Nodes for replication: " + nodes);
 
@@ -237,8 +290,11 @@ public class Server {
 
         int replicationLevel = 1;
 
-        for (String node : nodesArray) {
+        int nodesReplicated = 0;
 
+        int nodesSeen = 0;
+
+        for (String node : nodesArray) {
             int port = Integer.parseInt(node.substring(1,2)) + SERVER_BASE_PORT;
 
             System.out.println("Port: " + port);
@@ -247,26 +303,58 @@ public class Server {
 
             if(port == 5000 + id) {
                 System.out.println("Same server, storing in database...");
-                replicateCreationList(id, virtualNode, listUUID, listName, listContent,
-                        String.valueOf(replicationLevel));
+                replicateCreationList(id, virtualNode, listUUID, listName, listContent, String.valueOf(replicationLevel),"");
+                nodesSeen++;
+                nodesReplicated++;
+                replicationLevel++;
                 continue;
             }
 
             message.setVirtualnode(virtualNode);
             message.setReplicationLevel(String.valueOf(replicationLevel));
 
+            if(nodesSeen >= 2){
+                if(replicationLevel == 1) {
+                    message.setHintedHandoff(originalNode1 + ";create");
+                    System.out.println("Hinted handoff: " + originalNode1);
+                }
+                else{
+                    message.setHintedHandoff(originalNode2 + ";create");
+                    System.out.println("Hinted handoff: " + originalNode2);
+                }
+            }
+
             try (ZContext context = new ZContext()) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 socket.connect("tcp://localhost:" + port);
+                socket.setReceiveTimeOut(1000);
                 System.out.println("connected to port " + port + "...");
                 socket.send(message.toJson().getBytes(ZMQ.CHARSET));
                 System.out.println("Sent request to server: " + message.toJson());
                 byte[] response = socket.recv();
+
+                if(response == null){
+                    System.out.println("No response from server " + port);
+                    nodesSeen++;
+                    if(nodesSeen == 10){
+                        break;
+                    }
+                    continue;
+                }
                 String responseMessage = new String(response, ZMQ.CHARSET);
                 System.out.println("Received response from server: " + responseMessage);
             }
+            nodesSeen++;
+            nodesReplicated++;
             replicationLevel++;
+
+            if(nodesReplicated == 2){
+                System.out.println("Replicated to 2 nodes, breaking...");
+                break;
+            }
         }
+
+
     }
 
     private static int getSHA256Hash(String input) {
@@ -367,7 +455,8 @@ public class Server {
                         + "list_name TEXT,"
                         + "list_content TEXT,"
                         + "replicated INTEGER DEFAULT 0,"
-                        + "to_delete INTEGER DEFAULT 0"
+                        + "to_delete INTEGER DEFAULT 0,"
+                        + "hinted_handoff TEXT DEFAULT NULL"
                         + ")";
 
                 try (Statement stmt = conn.createStatement()) {
@@ -526,8 +615,15 @@ public class Server {
 
     private static void handleReplicateCreationListMessage(int id,Message message,ZMQ.Socket socket) {
 
+        String hintedHandoff = message.getHintedHandoff();
+
+        if (hintedHandoff==null){
+            System.out.println("No hinted handoff");
+            hintedHandoff = "";
+        }
+
         replicateCreationList(id, message.getVirtualnode(), message.getListUUID(), message.getListname(),
-                message.getListcontent(),message.getReplicationLevel());
+                message.getListcontent(),message.getReplicationLevel(),hintedHandoff);
 
         //send response to client
         String response = "Replicated creation of list in server " + id;
@@ -536,22 +632,37 @@ public class Server {
     }
 
     private static void replicateCreationList(int id, String virtualNode, String listUUID, String listName,
-                                                           String listContent, String replicationLevel) {
+                                                           String listContent, String replicationLevel,String hintedHandoff) {
         System.out.println("Replicating creation of list...");
 
         String url = "jdbc:sqlite:database/server/server_" + id + ".db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
-                String sql = "INSERT INTO shopping_lists (virtualnode_id, list_uuid, list_name, list_content, replicated)" +
-                        " VALUES (?, ?, ?, ?, ?)";
-                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                    pstmt.setString(1, virtualNode);
-                    pstmt.setString(2, listUUID);
-                    pstmt.setString(3, listName);
-                    pstmt.setString(4, listContent);
-                    pstmt.setInt(5, Integer.parseInt(replicationLevel));
-                    pstmt.executeUpdate();
+                if(hintedHandoff.isEmpty()){
+                    String sql = "INSERT INTO shopping_lists (virtualnode_id, list_uuid, list_name, list_content, " +
+                            "replicated) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                        pstmt.setString(1, virtualNode);
+                        pstmt.setString(2, listUUID);
+                        pstmt.setString(3, listName);
+                        pstmt.setString(4, listContent);
+                        pstmt.setString(5, replicationLevel);
+                        pstmt.executeUpdate();
+                    }
+                }
+                else{
+                    String sql = "INSERT INTO shopping_lists (virtualnode_id, list_uuid, list_name, list_content, " +
+                            "replicated, hinted_handoff) VALUES (?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                        pstmt.setString(1, virtualNode);
+                        pstmt.setString(2, listUUID);
+                        pstmt.setString(3, listName);
+                        pstmt.setString(4, listContent);
+                        pstmt.setString(5, replicationLevel);
+                        pstmt.setString(6, hintedHandoff);
+                        pstmt.executeUpdate();
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -928,6 +1039,81 @@ public class Server {
         }
 
         return listContent;
+    }
+
+    //search hinted handoff not null and send them to correct server
+    private static void searchHintedHandoff(int id) {
+        System.out.println("Searching hinted handoff...");
+
+        // get the list name and products and send it to the client
+        String url = "jdbc:sqlite:database/server/server_" + id + ".db";
+
+        List<Pair<String,String>> listsUUID = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            if (conn != null) {
+                String sql = "SELECT list_uuid, list_name, list_content, replicated, hinted_handoff FROM " +
+                        "shopping_lists WHERE hinted_handoff IS NOT NULL";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    ResultSet rs = pstmt.executeQuery();
+                    while (rs.next()) {
+                        String listUUID = rs.getString("list_uuid");
+                        String listName = rs.getString("list_name");
+                        String listContent = rs.getString("list_content");
+                        String replicationLevel = rs.getString("replicated");
+                        String hintedHandoff = rs.getString("hinted_handoff");
+                        String[] hintedHandoffParts = hintedHandoff.split(";");
+                        String node = hintedHandoffParts[0];
+                        String method = hintedHandoffParts[1];
+                        int port = Integer.parseInt(node.substring(1, 2)) + SERVER_BASE_PORT;
+                        int virtualNode = Integer.parseInt(node.substring(3));
+
+                        Message message = new Message();
+                        if(method.equals("create")){
+                            message.setMethod("createList");
+                            message.setListUUID(listUUID);
+                            message.setListname(listName);
+                            message.setListcontent(listContent);
+                            message.setVirtualnode(String.valueOf(virtualNode));
+                            message.setReplicationLevel(replicationLevel);
+                        }
+                        else{
+                            message.setMethod("updateList");
+                            message.setListUUID(listUUID);
+                            message.setListcontent(listContent);
+                            message.setVirtualnode(String.valueOf(virtualNode));
+                        }
+
+                        try (ZContext context = new ZContext()) {
+                            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+                            socket.connect("tcp://localhost:" + port);
+                            socket.setReceiveTimeOut(1000);
+                            System.out.println("connected to port " + port + "...");
+                            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
+                            System.out.println("Sent request to server: " + message.toJson());
+                            byte[] response = socket.recv();
+                            if (response == null) {
+                                System.out.println("No response from server " + port);
+                                continue;
+                            }
+                            String responseMessage = new String(response, ZMQ.CHARSET);
+                            System.out.println("Received response from server: " + responseMessage);
+                            // add list to lists to delete
+                            listsUUID.add(new Pair<>(listUUID,String.valueOf(virtualNode)));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error searching hinted handoff: " + e.getMessage());
+        }
+
+        //delete lists of listsUUID
+        for (Pair<String,String> pair : listsUUID) {
+            markListToDelete(id,pair.right(),pair.left());
+        }
+
+        deleteKeys(id);
     }
 
     record Pair<L, R>(L left, R right) {

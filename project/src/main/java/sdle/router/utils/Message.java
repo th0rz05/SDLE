@@ -14,6 +14,8 @@ public class Message {
     private String nrVirtualNodes;
     private String keys;
 
+    private String hintedHandoff;
+
     // Constructor
     public Message() {
         this.method = null;
@@ -26,6 +28,7 @@ public class Message {
         this.replicationLevel = null;
         this.nrVirtualNodes = null;
         this.keys = null;
+        this.hintedHandoff = null;
     }
 
     // Getters and Setters (optional)
@@ -109,6 +112,14 @@ public class Message {
         this.keys = keys;
     }
 
+    public String getHintedHandoff() {
+        return hintedHandoff;
+    }
+
+    public void setHintedHandoff(String hintedHandoff) {
+        this.hintedHandoff = hintedHandoff;
+    }
+
     // Serialize to JSON using Gson
     public String toJson() {
         Gson gson = new Gson();
@@ -135,6 +146,7 @@ public class Message {
                 ", replicationLevel='" + replicationLevel + '\'' +
                 ", nrVirtualNodes='" + nrVirtualNodes + '\'' +
                 ", keys='" + keys + '\'' +
+                ", hintedHandoff='" + hintedHandoff + '\'' +
                 '}';
     }
 }

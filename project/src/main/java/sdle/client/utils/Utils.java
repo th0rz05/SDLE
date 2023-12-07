@@ -110,7 +110,7 @@ public class Utils {
             int routerPort = connectRouter();
 
             if(routerPort == 0){
-                System.out.println("\nCould not connect to router");
+                //System.out.println("Could not connect to router");
                 return;
             }
 
@@ -280,7 +280,7 @@ public class Utils {
             int routerPort = connectRouter();
 
             if(routerPort == 0){
-                System.out.println("\nCould not connect to router");
+                //System.out.println("\nCould not connect to router");
                 return false;
             }
 
