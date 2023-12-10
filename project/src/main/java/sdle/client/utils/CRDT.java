@@ -23,7 +23,7 @@ public class CRDT {
         }
 
         public void decrement(String userId, int amount) {
-            N.put(userId, N.getOrDefault(userId, 0) + amount);
+            N.put(userId, Math.min(N.getOrDefault(userId, 0) + amount, P.getOrDefault(userId, 0)));
         }
 
         public int value() {

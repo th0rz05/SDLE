@@ -105,10 +105,10 @@
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     System.out.println("Shutting down...");
                      //end all threads
-                    executor.shutdown();
+                    // executor.shutdown();
                      //wait for all threads to end
-                    while (!executor.isTerminated()) {
-                    }
+                    // while (!executor.isTerminated()) {
+                    // }
                 }));
     
                 if (joinHashRing) {
