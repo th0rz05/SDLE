@@ -5,6 +5,11 @@
 Open the terminal in the project folder and run:
 
 ```bash
+mkdir -p database/client
+mkdir -p database/server
+````
+
+```bash
 ./gradlew clean clientJar serverJar routerJar
 ```
 
@@ -28,4 +33,4 @@ java -jar build/libs/client.jar
 
 ## Demo
 
-[![Demo Video](https://img.youtube.com/vi/CeYWqGcszhw/0.jpg)](https://youtu.be/CeYWqGcszhw)
+[![Demo Video](https://img.youtube.com/vi/9sGed0RnRms/0.jpg)](https://www.youtube.com/watch?v=9sGed0RnRms)
