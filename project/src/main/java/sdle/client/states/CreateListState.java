@@ -45,7 +45,7 @@ public class CreateListState implements State {
 
         // Save the shopping list to the database
         if (Utils.saveListInDatabase(user,shoppingListName,shoppingListUUID,mapPNCounterString)) {
-            Utils.sendShoppingListToServer(user,shoppingListUUID);
+            Utils.updateShoppingListInServer(user,shoppingListUUID);
             System.out.println("Shopping List created with ID: " + shoppingListUUID);
         } else {
             System.out.println("Failed to save Shopping List to the database.");

@@ -104,6 +104,7 @@ public class Utils {
     }
 
     public static void updateShoppingListInServer(String user, String shoppingListUUID) {
+        String name = getListName(user,shoppingListUUID);
         String listContent = getListProducts(user,shoppingListUUID);
 
         try (ZContext context = new ZContext()) {
@@ -122,38 +123,9 @@ public class Utils {
             message.setMethod("updateList");
             message.setListUUID(shoppingListUUID);
             message.setListcontent(listContent);
-
-            socket.send(message.toJson().getBytes(ZMQ.CHARSET));
-
-            byte[] reply = socket.recv();
-            System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
-        }
-    }
-
-    public static void sendShoppingListToServer(String user,String shoppingListUUID) {
-        String name = getListName(user,shoppingListUUID);
-        String listContent = getListProducts(user,shoppingListUUID);
-
-        try (ZContext context = new ZContext()) {
-            int routerPort = connectRouter();
-
-            if(routerPort == 0){
-                System.out.println("\nCould not connect to router");
-                return;
-            }
-
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(ROUTER_ADDRESS + routerPort);
-
-            Message message = new Message();
-
-            message.setMethod("createList");
-            message.setListUUID(shoppingListUUID);
             message.setListname(name);
-            message.setListcontent(listContent);
 
             socket.send(message.toJson().getBytes(ZMQ.CHARSET));
-            //System.out.println("Sent message to server: " + message.toJson());
 
             byte[] reply = socket.recv();
             System.out.println("Received reply from server: " + new String(reply, ZMQ.CHARSET));
